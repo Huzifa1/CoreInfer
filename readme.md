@@ -1,4 +1,4 @@
-# CoreInfer: Accelerating Large Language Model Inference with Semantics-Inspired Adaptive Sparse Activation
+o# CoreInfer: Accelerating Large Language Model Inference with Semantics-Inspired Adaptive Sparse Activation
 
 ## TL;DR
 
@@ -8,7 +8,7 @@ Paper Link:
 
 Project Web:
 
-![Overview](fig\overview.png)
+![Overview](demo\overview.png)
 
 The overview framework of CoreInfer. In the pre-filling stage, at each activation layer, taking the i-th activation layer as an example, we first extract the token-wise core neurons based on the top-k selection and then further extract the top-k commonly activated core neurons among all tokens, which go through the stability estimation to determine how to update the sentence-wise core neuron set. After determination, the core neuron set will be fixed and utilized for sparse decoding.
 
@@ -26,11 +26,11 @@ The current release supports:
 
 CoreInfer v.s. Transformers Implement on Question-Answer Task.
 
-<video controls width="600">   <source src="fig/compare_final" type="video/mp4">  </video>
+<video controls width="600">   <source src="demo/compare_final" type="video/mp4">  </video>
 
 CoreInfer v.s. Transformers Implement on Summarization Task.
 
-<video controls width="600">   <source src="fig/compare_sum" type="video/mp4">  </video>
+<video controls width="600">   <source src="demo/compare_sum" type="video/mp4">  </video>
 
 CoreInfer v.s. Transformers Implement on a single RNVIDIA TITAN Xp (12G) running opt (ReLU)-7B with amazing speedup! At the same time, CoreInfer performs well in both question-answering and summarization tasks.
 
