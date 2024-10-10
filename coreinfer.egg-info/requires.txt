@@ -1,0 +1,15 @@
+torch==2.4.0
+transformers==4.44.2
+accelerate
+safetensors
+datasets
+triton
+msgspec
+scipy
+sentence_transformers
+scikit-learn==1.5.1
+lm-eval
+
+[eval]
+protobuf
+datasets
