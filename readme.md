@@ -8,7 +8,7 @@ Paper Link:
 
 Project Web:
 
-![Overview](demo\overview.png)
+![Overview](demo/overview.png)
 
 The overview framework of CoreInfer. In the pre-filling stage, at each activation layer, taking the i-th activation layer as an example, we first extract the token-wise core neurons based on the top-k selection and then further extract the top-k commonly activated core neurons among all tokens, which go through the stability estimation to determine how to update the sentence-wise core neuron set. After determination, the core neuron set will be fixed and utilized for sparse decoding.
 
