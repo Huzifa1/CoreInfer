@@ -148,7 +148,6 @@ Our task evaluation is based on lm_eval. You can evaluate the performance of the
 
 ```python
 cd evaluate
-
 python evaluate_task.py --model_name $model --task_name $task  --checkpoint_path /PATH/TO/MODEL --method ['stable_guided', 'similarity_guided'] --sparsity $model_sparsity --cluster_path /PATH/TO/SAVE/CLUSTER --memory_limit
 
 # e.g.: python evaluate_task.py --model_name 'opt-6.7b' --task_name 'truthfulqa_gen' --checkpoint_path '../models/opt-6.7b' --method 'stable_guided' --sparsity 0.4
