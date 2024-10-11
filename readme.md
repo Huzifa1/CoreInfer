@@ -130,7 +130,7 @@ python coreinfer.py --model_name $model --prompt $prompt -num_tokens_to_generate
 # e.g.: python coreinfer.py --model_name 'llama3-8b' --prompt "What is the spiciest part of a chili pepper?" --num_tokens_to_generate 256 --task_type 'QA' --checkpoint_path './models/llama3-8b' --sparsity 0.4 --method 'similarity_guided' --cluster_path './cluster/Llama3-8B_QA'
 ```
 
-- Inference on low-performance devices
+- 2.3 Inference on low-performance devices
 
 When the GPU memory is limited and the model cannot be fully loaded, enable memory limit to significantly speed up the model inference.
 
