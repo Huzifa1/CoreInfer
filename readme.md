@@ -62,6 +62,8 @@ pip install -e .
 
 ## Fast Inference
 
+
+
 （Optional）Download Model and Dataset
 
 You can download the required models and datasets to the specified location using the following command.
@@ -77,7 +79,8 @@ We provide two sparse inference methods: stability-guided and similarity-guided.
 
 #### 1. Stability-guided Inference
 
-- Inference on high-performance device.
+
+- 1.1 Inference on high-performance device.
 
 When the GPU memory is large enough to hold the original model, you can use the following command to directly run stability-guided inference.
 
@@ -88,7 +91,7 @@ python coreinfer.py --model_name $model --prompt $prompt -num_tokens_to_generate
 # e.g.: python coreinfer.py --model_name 'llama3-8b' --prompt "What is the spiciest part of a chili pepper?" --num_tokens_to_generate 256 --task_type 'QA' --checkpoint_path './models/llama3-8b' --sparsity 0.4
 ```
 
-- Inference on low-performance devices
+- 1.2 Inference on low-performance devices
 
 When the GPU memory is limited and the model cannot be fully loaded, enable memory limit to significantly speed up the model operation. You can adjust the memory required for inference by adjusting sparsity.
 
@@ -103,7 +106,7 @@ Currently we provide three tasks: QA, Summary, and Translate_de_en. If you want 
 
 #### 2. Similarity-guided Inference
 
-- Pre-classification of neurons
+- 2.1 Pre-classification of neurons
 
 Similarity-guided Inference requires pre-classification of neurons according to the task. We provide QA pre-classified neurons for Llama3.1-8B and opt6.7B in cluster/. If you want to try other models or other tasks, you can select a dataset suitable for the task and pre-classify neurons using the following command:
 
@@ -116,7 +119,7 @@ python cluster.py --model_name $model --dataset_name $dataset  --checkpoint_path
 
 The classified neurons will be saved to /PATH/TO/SAVE/CLUSTER.
 
-- Inference on high-performance device.
+- 2.2 Inference on high-performance device.
 
 When the GPU memory is large enough to hold the original model, you can use the following command to directly run similarity-guided inference.
 
@@ -171,7 +174,7 @@ python evaluate_hardware.py --model_name $model --checkpoint_path /PATH/TO/MODEL
 
 
 ## Paper and Citation
-
+---
 More technical details can be found in our paper. If you find CoreInfer useful or relevant to your project and research, please kindly cite our paper:
 
 
