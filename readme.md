@@ -1,8 +1,8 @@
-o# CoreInfer: Accelerating Large Language Model Inference with Semantics-Inspired Adaptive Sparse Activation
+# CoreInfer: Accelerating Large Language Model Inference with Semantics-Inspired Adaptive Sparse Activation
 
 ## TL;DR
 
-CoreInfer is an MLP-free adaptive sparse activation inference method based on sentence-level prediction, achieve a **10.33x ** speedup compared to the Transformers implementation.
+CoreInfer is an MLP-free adaptive sparse activation inference method based on sentence-level prediction, achieve a **10.33x** speedup compared to the Transformers implementation.
 
 Paper Link:
 
