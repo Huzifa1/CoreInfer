@@ -70,7 +70,6 @@ You can download the required models and datasets to the specified location usin
 python download.py --model_name  $model --checkpoint_path /PATH/TO/SAVE/MODEL --data_name $dataset --data_config $data_config  --datasave_path /PATH/TO/SAVE/DATASET
 
 # e.g.: python download.py --model_name  'facebook/opt-6.7b' --checkpoint_path "./models/opt-6.7b" --data_name "truthfulqa/truthful_qa" --data_config "generation" --datasave_path "./dataset/trurthul_qa"
-
 # e.g.: python download.py --model_name  'meta-llama/Llama-3.1-8B' --checkpoint_path "./models/llama3-8b" --data_name "truthfulqa/truthful_qa" --data_config "generation" --datasave_path "./dataset/trurthul_qa" --token "xxxxx"
 ```
 
@@ -86,7 +85,6 @@ When the GPU memory is large enough to hold the original model, you can use the 
 python coreinfer.py --model_name $model --prompt $prompt -num_tokens_to_generate $maximum_output_tokens --task_type $task --checkpoint_path /PATH/TO/MODEL --sparsity $model_sparsity
 
 # e.g.: python coreinfer.py --model_name 'opt-6.7b' --prompt "What is the spiciest part of a chili pepper?" --num_tokens_to_generate 256 --task_type 'QA' --checkpoint_path './models/opt-6.7b' --sparsity 0.4
-
 # e.g.: python coreinfer.py --model_name 'llama3-8b' --prompt "What is the spiciest part of a chili pepper?" --num_tokens_to_generate 256 --task_type 'QA' --checkpoint_path './models/llama3-8b' --sparsity 0.4
 ```
 
@@ -98,7 +96,6 @@ When the GPU memory is limited and the model cannot be fully loaded, enable memo
 python coreinfer.py --model_name $model --prompt $prompt -num_tokens_to_generate $maximum_output_tokens --task_type $task --checkpoint_path /PATH/TO/MODEL --sparsity $model_sparsity --memory_limit
 
 # e.g.: python coreinfer.py --model_name 'opt-6.7b' --prompt "What is the spiciest part of a chili pepper?" --num_tokens_to_generate 256 --task_type 'QA' --checkpoint_path './models/opt-6.7b' --sparsity 0.4 --memory_limit
-
 # e.g.: python coreinfer.py --model_name 'llama3-8b' --prompt "What is the spiciest part of a chili pepper?" --num_tokens_to_generate 256 --task_type 'QA' --checkpoint_path './models/llama3-8b' --sparsity 0.4 --memory_limit
 ```
 
@@ -114,7 +111,6 @@ Similarity-guided Inference requires pre-classification of neurons according to 
 python cluster.py --model_name $model --dataset_name $dataset  --checkpoint_path /PATH/TO/MODEL --dataset_path /PATH/TO/DATASET --cluster_path /PATH/TO/SAVE/CLUSTER --sparsity $sparsity
 
 # e.g.: python cluster.py --model_name  'opt-6.7b' --dataset_name 'truthful_qa'  --checkpoint_path './models/opt-6.7b' --dataset_path './dataset/trurthul_qa' --cluster_path './cluster/opt-6.7B_QA' --sparsity 0.4
-
 # e.g.: python cluster.py --model_name  'llama3-8b' --dataset_name 'truthful_qa'  --checkpoint_path './models/llama3-8b' --dataset_path './dataset/trurthul_qa' --cluster_path './cluster/Llama3-8B_QA' --sparsity 0.4
 ```
 
@@ -128,7 +124,6 @@ When the GPU memory is large enough to hold the original model, you can use the 
 python coreinfer.py --model_name $model --prompt $prompt -num_tokens_to_generate $maximum_output_tokens --task_type $task --checkpoint_path /PATH/TO/MODEL --sparsity $model_sparsity --method 'similarity_guided' --cluster_path /PATH/TO/SAVE/CLUSTER
 
 # e.g.: python coreinfer.py --model_name 'opt-6.7b' --prompt "What is the spiciest part of a chili pepper?" --num_tokens_to_generate 256 --task_type 'QA' --checkpoint_path './models/opt-6.7b' --sparsity 0.4 --method 'similarity_guided' --cluster_path './cluster/opt-6.7B_QA'
-
 # e.g.: python coreinfer.py --model_name 'llama3-8b' --prompt "What is the spiciest part of a chili pepper?" --num_tokens_to_generate 256 --task_type 'QA' --checkpoint_path './models/llama3-8b' --sparsity 0.4 --method 'similarity_guided' --cluster_path './cluster/Llama3-8B_QA'
 ```
 
@@ -140,7 +135,6 @@ When the GPU memory is limited and the model cannot be fully loaded, enable memo
 python coreinfer.py --model_name $model --prompt $prompt -num_tokens_to_generate $maximum_output_tokens --task_type $task --checkpoint_path /PATH/TO/MODEL --sparsity $model_sparsity --method 'similarity_guided' --cluster_path /PATH/TO/SAVE/CLUSTER --memory_limit
 
 # e.g.: python coreinfer.py --model_name 'opt-6.7b' --prompt "What is the spiciest part of a chili pepper?" --num_tokens_to_generate 256 --task_type 'QA' --checkpoint_path './models/opt-6.7b' --sparsity 0.4 --method 'similarity_guided' --cluster_path './cluster/opt-6.7B_QA' --memory_limit
-
 # e.g.: python coreinfer.py --model_name 'llama3-8b' --prompt "What is the spiciest part of a chili pepper?" --num_tokens_to_generate 256 --task_type 'QA' --checkpoint_path './models/llama3-8b' --sparsity 0.4 --method 'similarity_guided' --cluster_path './cluster/Llama3-8B_QA' --memory_limit
 ```
 
@@ -158,7 +152,6 @@ cd evaluate
 python evaluate_task.py --model_name $model --task_name $task  --checkpoint_path /PATH/TO/MODEL --method ['stable_guided', 'similarity_guided'] --sparsity $model_sparsity --cluster_path /PATH/TO/SAVE/CLUSTER --memory_limit
 
 # e.g.: python evaluate_task.py --model_name 'opt-6.7b' --task_name 'truthfulqa_gen' --checkpoint_path '../models/opt-6.7b' --method 'stable_guided' --sparsity 0.4
-
 # e.g.: python evaluate_task.py --model_name 'llama3-8b' --task_name 'truthfulqa_gen' --checkpoint_path '../models/llama3-8b' --method 'stable_guided' --sparsity 0.4
 ```
 
@@ -173,7 +166,6 @@ cd evaluate
 python evaluate_hardware.py --model_name $model --checkpoint_path /PATH/TO/MODEL  --method ['stable_guided', 'similarity_guided'] --sparsity $model_sparsity --cluster_path /PATH/TO/SAVE/CLUSTER --memory_limit
 
 # e.g.: python evaluate_hardware.py --model_name 'opt-6.7b' --num_tokens_to_generate 512 --checkpoint_path '../models/opt-6.7b' --sparsity 0.4
-
 # e.g.: python evaluate_hardware.py --model_name 'llama3-8b' --num_tokens_to_generate 512 --checkpoint_path '../models/llama3-8b' --sparsity 0.4
 ```
 
