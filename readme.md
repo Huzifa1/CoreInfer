@@ -46,7 +46,7 @@ CoreInfer v.s. Transformers Implement on a single RNVIDIA TITAN Xp (12G) running
 1. Clone the repo and navigate to coreinfer:
 
 ```python
-git clone 
+git clone https://github.com/wangqinsi1/CoreInfer.git
 cd coreinfer
 ```
 
