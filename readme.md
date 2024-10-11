@@ -26,11 +26,16 @@ The current release supports:
 
 CoreInfer v.s. Transformers Implement on Question-Answer Task.
 
-<video controls width="600">   <source src="demo/compare_final" type="video/mp4">  </video>
+
+https://github.com/user-attachments/assets/17db5ae0-cd9d-4196-a233-45a85f302166
+
 
 CoreInfer v.s. Transformers Implement on Summarization Task.
 
-https://github.com/wangqinsi1/CoreInfer/blob/master/demo/compare_sum.mp4
+
+
+
+
 
 CoreInfer v.s. Transformers Implement on a single RNVIDIA TITAN Xp (12G) running opt (ReLU)-7B with amazing speedup! At the same time, CoreInfer performs well in both question-answering and summarization tasks.
 
