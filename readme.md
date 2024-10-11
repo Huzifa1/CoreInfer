@@ -75,7 +75,7 @@ python download.py --model_name  $model --checkpoint_path /PATH/TO/SAVE/MODEL --
 
 We provide two sparse inference methods: stability-guided and similarity-guided.
 
-#### Stability-guided Inference
+#### 1. Stability-guided Inference
 
 - Inference on high-performance device.
 
@@ -101,7 +101,7 @@ python coreinfer.py --model_name $model --prompt $prompt -num_tokens_to_generate
 
 Currently we provide three tasks: QA, Summary, and Translate_de_en. If you want to try more tasks, you can implement it by adding the few shot example corresponding to the task in utils.py.
 
-#### Similarity-guided Inference
+#### 2. Similarity-guided Inference
 
 - Pre-classification of neurons
 
