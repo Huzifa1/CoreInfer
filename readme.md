@@ -33,7 +33,7 @@ https://github.com/user-attachments/assets/17db5ae0-cd9d-4196-a233-45a85f302166
 CoreInfer v.s. Transformers Implement on Summarization Task.
 
 
-
+https://github.com/user-attachments/assets/009f01c5-01fc-4302-8906-a55274f2e654
 
 
 
