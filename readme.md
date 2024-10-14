@@ -113,8 +113,8 @@ Similarity-guided Inference requires pre-classification of neurons according to 
 ```python
 python cluster.py --model_name $model --dataset_name $dataset  --checkpoint_path /PATH/TO/MODEL --dataset_path /PATH/TO/DATASET --cluster_path /PATH/TO/SAVE/CLUSTER --sparsity $sparsity
 
-# e.g.: python cluster.py --model_name  'opt-6.7b' --dataset_name 'truthful_qa'  --checkpoint_path './models/opt-6.7b' --dataset_path './dataset/trurthul_qa' --cluster_path './cluster/opt-6.7B_QA' --sparsity 0.4
-# e.g.: python cluster.py --model_name  'llama3-8b' --dataset_name 'truthful_qa'  --checkpoint_path './models/llama3-8b' --dataset_path './dataset/trurthul_qa' --cluster_path './cluster/Llama3-8B_QA' --sparsity 0.4
+# e.g.: python cluster.py --model_name  'opt-6.7b' --dataset_name 'truthful_qa'  --checkpoint_path './models/opt-6.7b' --dataset_path './dataset/trurthul_qa' --cluster_path './cluster/opt-6.7B_QA_example' --sparsity 0.4
+# e.g.: python cluster.py --model_name  'llama3-8b' --dataset_name 'truthful_qa'  --checkpoint_path './models/llama3-8b' --dataset_path './dataset/trurthul_qa' --cluster_path './cluster/Llama3-8B_QA_example' --sparsity 0.4
 ```
 
 The classified neurons will be saved to /PATH/TO/SAVE/CLUSTER.
