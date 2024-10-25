@@ -177,6 +177,10 @@ python evaluate_hardware.py --model_name $model --checkpoint_path /PATH/TO/MODEL
 ---
 More technical details can be found in our paper. If you find CoreInfer useful or relevant to your project and research, please kindly cite our paper:
 
+```bibtex
+
+```
+
 
 
 
