@@ -4,9 +4,9 @@
 
 CoreInfer is an MLP-free adaptive sparse activation inference method based on sentence-level prediction, achieve a **10.33x** speedup compared to the Transformers implementation.
 
-Paper Link:
+Paper Link: [https://arxiv.org/abs/2410.18311](https://arxiv.org/abs/2410.18311)
 
-Project Web:
+Project Web: [https://wangqinsi1.github.io/coreinfer_page/](https://arxiv.org/abs/2410.18311)
 
 ![Overview](demo/overview.png)
 
