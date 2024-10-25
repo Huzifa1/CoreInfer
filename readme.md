@@ -6,7 +6,7 @@ CoreInfer is an MLP-free adaptive sparse activation inference method based on se
 
 Paper Link: [https://arxiv.org/abs/2410.18311](https://arxiv.org/abs/2410.18311)
 
-Project Web: [https://wangqinsi1.github.io/coreinfer_page/](https://arxiv.org/abs/2410.18311)
+Project Web: [https://wangqinsi1.github.io/coreinfer_page/](https://wangqinsi1.github.io/coreinfer_page/)
 
 ![Overview](demo/overview.png)
 
