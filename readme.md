@@ -178,7 +178,15 @@ python evaluate_hardware.py --model_name $model --checkpoint_path /PATH/TO/MODEL
 More technical details can be found in our paper. If you find CoreInfer useful or relevant to your project and research, please kindly cite our paper:
 
 ```bibtex
-
+@misc{wang2024coreinferacceleratinglargelanguage,
+      title={CoreInfer: Accelerating Large Language Model Inference with Semantics-Inspired Adaptive Sparse Activation}, 
+      author={Qinsi Wang and Saeed Vahidian and Hancheng Ye and Jianyang Gu and Jianyi Zhang and Yiran Chen},
+      year={2024},
+      eprint={2410.18311},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2410.18311}, 
+}
 ```
 
 
