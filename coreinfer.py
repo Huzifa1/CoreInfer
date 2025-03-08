@@ -58,11 +58,11 @@ def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_t
         prompt = process_prompt_similarity(ori_prompt, task_type)
     input_ids = tokenizer.encode(prompt, return_tensors='pt').to(device)
 
-
     eos_token_id = tokenizer.convert_tokens_to_ids('.')
     with torch.no_grad():
         outputs = model(input_ids, use_cache=True)
         past_key_values = outputs.past_key_values
+
     
     generated = input_ids
     

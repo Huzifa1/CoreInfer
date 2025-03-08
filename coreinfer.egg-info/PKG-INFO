@@ -1,4 +1,4 @@
-Metadata-Version: 2.1
+Metadata-Version: 2.2
 Name: coreinfer
 Version: 0.1
 Summary: CoreInfer: Accelerating Large Language Model Inference with Semantics-Inspired Adaptive Sparse Activation

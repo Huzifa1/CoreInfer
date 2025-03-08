@@ -8,5 +8,10 @@ coreinfer.egg-info/SOURCES.txt
 coreinfer.egg-info/dependency_links.txt
 coreinfer.egg-info/requires.txt
 coreinfer.egg-info/top_level.txt
+coreinfer.egg-info/.ipynb_checkpoints/PKG-INFO-checkpoint
+coreinfer.egg-info/.ipynb_checkpoints/SOURCES-checkpoint.txt
+coreinfer.egg-info/.ipynb_checkpoints/dependency_links-checkpoint.txt
+coreinfer.egg-info/.ipynb_checkpoints/requires-checkpoint.txt
+coreinfer.egg-info/.ipynb_checkpoints/top_level-checkpoint.txt
 evaluate/evaluate_hardware.py
 evaluate/evaluate_task.py

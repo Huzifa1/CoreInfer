@@ -154,7 +154,8 @@ def load_opt_model(checkpoint_path, start_num, end_num):
 
 
 def load_llama_model(checkpoint_path, start_num, end_num):
-    model = AutoModelForCausalLM.from_pretrained(checkpoint_path, torch_dtype=torch.float16, device_map='cuda')
+    # TODO change device_map back to "cuda"
+    model = AutoModelForCausalLM.from_pretrained(checkpoint_path, torch_dtype=torch.float16, device_map='auto')
     num_layers = model.config.num_hidden_layers
     for name, param in model.named_parameters():
         num = 0
