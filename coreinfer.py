@@ -3,51 +3,10 @@ import time
 from pathlib import Path
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from utils import *
-from convert.convert_opt_model import convert_opt_model
-from convert.convert_opt_model_sim import convert_opt_model_sim
-from convert.convert_llama_model import convert_llama_model
-from convert.convert_llama_model_sim import convert_llama_model_sim
+from common import *
 
 
 default_device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
-# Load Model
-def _load_model(model_name, start_num, end_num, checkpoint_path, device, memory_limit):
-    if memory_limit == True:
-        if "opt" in model_name:
-            model, num_layers = load_opt_model(checkpoint_path, start_num, end_num)
-                    
-        elif "llama" in model_name:
-            model, num_layers = load_llama_model(checkpoint_path, start_num, end_num)
-                
-    else:
-        model = AutoModelForCausalLM.from_pretrained(checkpoint_path, device_map=device, torch_dtype=torch.float16)
-        num_layers = model.config.num_hidden_layers
-        
-    tokenizer = AutoTokenizer.from_pretrained(checkpoint_path, device_map=device)
-        
-    return model, tokenizer, num_layers
-
-    
-# Convert Model
-def convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path=None):
-    if "opt" in model_name:
-        if method == 'stable_guided':
-            model = convert_opt_model(model, sparsity, start_num, end_num, token_sparsity, memory_limit)
-        elif method == 'similarity_guided':
-            model = convert_opt_model_sim(model, num_layers, sparsity, start_num, end_num, memory_limit, cluster_path)
-            
-        
-    elif "llama" in model_name:
-        if method == 'stable_guided':
-            model = convert_llama_model(model, sparsity, start_num, end_num, token_sparsity, memory_limit)
-        elif method == 'similarity_guided':
-            model = convert_llama_model_sim(model, num_layers, sparsity, start_num, end_num, memory_limit, cluster_path)
-        
-    return model
-
-
-
 
 # Test Model
 def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_tokens_to_generate, device):
@@ -102,14 +61,11 @@ def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_t
 
 
 
-def main(method, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, prompt, memory_limit, num_fewshot, task_type, num_tokens_to_generate, device, cluster_path = None):
-    model, tokenizer, num_layers = _load_model(model_name, start_num, end_num, checkpoint_path, device, memory_limit)
-    
-    if cluster_path is None:
-        model  = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit)
-    else:
-        model  = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path)
-        
+def main(method, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, prompt, memory_limit, num_fewshot, task_type, num_tokens_to_generate, device, cluster_path = None, cpu_only = False):
+    model, tokenizer, num_layers = load_model(model_name, start_num, end_num, checkpoint_path, device, memory_limit)
+
+    model = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path, cpu_only)
+
     generate(method, model, tokenizer, prompt, task_type, num_fewshot, num_tokens_to_generate, device)
 
 
@@ -133,11 +89,16 @@ if __name__ == '__main__':
     parser.add_argument('--memory_limit', action='store_true', help='Enable memory limit.')
     parser.add_argument('--method', type=str, choices=['stable_guided', 'similarity_guided'], default='stable_guided', help='Method to use (default: stable_guided).')
     parser.add_argument('--cluster_path', type=str, default=None, help='Optional cluster path.')
+    parser.add_argument('--cpu-only', action='store_true', help='Run inference on CPU only.')
 
     args = parser.parse_args()
 
+    if (args.cpu_only):
+        default_device = 'cpu'
+        args.device = 'cpu'
+
     main(args.method, args.model_name, args.checkpoint_path, args.sparsity, args.start_num, args.end_num, args.token_sparsity, args.prompt, args.memory_limit,
-        args.num_fewshot, args.task_type, args.num_tokens_to_generate, args.device, args.cluster_path)
+        args.num_fewshot, args.task_type, args.num_tokens_to_generate, args.device, args.cluster_path, args.cpu_only)
 
 
 

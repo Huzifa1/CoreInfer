@@ -1,53 +1,12 @@
 import torch
-import time
 from pathlib import Path
-from transformers import OPTForCausalLM
-from transformers import AutoModelForCausalLM, AutoTokenizer
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from utils import *
-from convert.convert_opt_model import convert_opt_model
-from convert.convert_opt_model_sim import convert_opt_model_sim
-from convert.convert_llama_model import convert_llama_model
-from convert.convert_llama_model_sim import convert_llama_model_sim
+from common import *
 
 default_device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
-# Load Model
-def _load_model(checkpoint_path, start_num, end_num, device, memory_limit):
-    if memory_limit == True:
-        if "opt" in model_name:
-            model, num_layers = load_opt_model(checkpoint_path, start_num, end_num)
-                    
-        elif "llama" in model_name:
-            model, num_layers = load_llama_model(checkpoint_path, start_num, end_num)
-    else:
-        model = AutoModelForCausalLM.from_pretrained(checkpoint_path, device_map=device, torch_dtype=torch.float16)
-        
-    tokenizer = AutoTokenizer.from_pretrained(checkpoint_path, device_map=device)
-        
-    return model, tokenizer
-
-    
-# Convert Model
-def convert_model(method, model, model_name, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path=None):
-    if "opt" in model_name:
-        if method == 'stable_guided':
-            model = convert_opt_model(model, sparsity, start_num, end_num, token_sparsity, memory_limit)
-        elif method == 'similarity_guided':
-            model = convert_opt_model_sim(model, num_layers, sparsity, start_num, end_num, memory_limit, cluster_path)
-            
-        
-    elif "llama" in model_name:
-        if method == 'stable_guided':
-            model = convert_llama_model(model, sparsity, start_num, end_num, token_sparsity, memory_limit)
-        elif method == 'similarity_guided':
-            model = convert_llama_model_sim(model, num_layers, sparsity, start_num, end_num, memory_limit, cluster_path)
-        
-    return model
-
-
 
 
 # Test Model
@@ -68,13 +27,11 @@ def evaluate(task_name, model, tokenizer, num_fewshot, device):
 
 
 
-def main(method, task_name, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, memory_limit, device, num_fewshot, cluster_path = None):
-    model, tokenizer = _load_model(checkpoint_path, start_num, end_num, device, memory_limit)
+def main(method, task_name, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, memory_limit, device, num_fewshot, cluster_path = None, cpu_only = None):
     
-    if cluster_path is None:
-        model  = convert_model(method, model, model_name, sparsity, start_num, end_num, token_sparsity, memory_limit)
-    else:
-        model  = convert_model(method, model, model_name, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path)
+    model, tokenizer, num_layers = load_model(checkpoint_path, start_num, end_num, checkpoint_path, device, memory_limit)
+    
+    model = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path, cpu_only)
         
     evaluate(task_name, model, tokenizer, num_fewshot, device)
 
@@ -97,11 +54,17 @@ if __name__ == '__main__':
     parser.add_argument('--memory_limit', action='store_true', help='Enable memory limit.')
     parser.add_argument('--method', type=str, choices=['stable_guided', 'similarity_guided'], default='stable_guided', help='Method to use (default: stable_guided).')
     parser.add_argument('--cluster_path', type=str, default=None, help='Optional cluster path.')
+    parser.add_argument('--cpu-only', action='store_true', help='Run inference on CPU only.')
 
     args = parser.parse_args()
+
+    if (args.cpu_only):
+        default_device = 'cpu'
+        args.device = 'cpu'
+
     
     main(args.method, args.task_name, args.model_name, args.checkpoint_path, args.sparsity, args.start_num, args.end_num, args.token_sparsity,
-         args.memory_limit, args.device, args.num_fewshot, args.cluster_path)
+         args.memory_limit, args.device, args.num_fewshot, args.cluster_path, args.cpu_only)
 
 
     
