@@ -158,8 +158,8 @@ def collect_activations(model_name, data, tokenizer, device, model, Layer_num = 
     activations = []
     for i in tqdm(range(len(data)), desc="Collecting activations"):
 
-        cleaned_text = re.sub(r'[^a-zA-Z0-9\s.,!?;:]', '', prompt)
         prompt = data[i]
+        cleaned_text = re.sub(r'[^a-zA-Z0-9\s.,!?;:]', '', prompt)
         tokenized_input = tokenizer(cleaned_text, return_tensors="pt").to(device)
         
         activation_dict = {}
@@ -179,7 +179,7 @@ def collect_activations(model_name, data, tokenizer, device, model, Layer_num = 
     return activations
 
 
-def get_sentence_core_neurons(model_name, model, tokenizer, precessed_data, Layer_num, device, token_sparsity, sparsity, neuron_num = None):
+def get_sentence_core_neurons(model_name, model, tokenizer, precessed_data, Layer_num, device, token_sparsity, sparsity, neuron_num):
     
     activations = collect_activations(model_name, precessed_data, tokenizer, device, model)
     
