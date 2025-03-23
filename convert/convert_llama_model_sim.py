@@ -1,13 +1,7 @@
 import torch.nn as nn
 import gc
-from scipy.stats import norm
 import torch
-import numpy as np
-import pickle
-from sklearn.preprocessing import MultiLabelBinarizer
 from tqdm import tqdm
-import pickle
-import os
 import common
 
 global_cluster = None
@@ -23,7 +17,7 @@ class DownLayer(nn.Module):
         self.weight = weight.clone()
         self.remained_neurons = remained_neurons
         self.memory_limit = memory_limit
-        self.act_list = act_list[:][:remained_neurons]
+        self.act_list = [sublist[:remained_neurons] for sublist in act_list]
         self.num = num
         self.kmeans = kmeans
         self.mlb_loaded = mlb_loaded
@@ -54,6 +48,7 @@ class DownLayer(nn.Module):
 
                 global global_cluster
                 global_cluster = predictions[0]
+                print("Current Input is predicted to be in cluster: ", global_cluster)
 
                 del indices_all_2d, new_data
                 gc.collect()
@@ -84,7 +79,7 @@ class UpGateLayer(nn.Module):
         self.remained_neurons = remained_neurons
         self.memory_limit = memory_limit
         self.cpu_only = cpu_only
-        self.act_list = act_list[:][:remained_neurons]
+        self.act_list = [sublist[:remained_neurons] for sublist in act_list]
         self.weight_updated = False
         self.filtered_W = torch.zeros((remained_neurons, weight.size(1))).to(torch.float16).to(device)
         

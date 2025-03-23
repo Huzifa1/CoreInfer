@@ -1,7 +1,6 @@
 corevenv/
 dataset/
 models/
-fig/
 ignore/
 
 # Byte-compiled / optimized / DLL files

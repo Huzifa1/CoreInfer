@@ -62,7 +62,7 @@ def load_model(model_name, start_num, end_num, checkpoint_path, device, memory_l
 
     if tokenizer.pad_token is None:
         tokenizer.add_special_tokens({'pad_token': '[PAD]'})
-        model.resize_token_embeddings(len(tokenizer))
+        model.resize_token_embeddings(len(tokenizer), mean_resizing=False)
         
     return model, tokenizer, num_layers
 
@@ -147,6 +147,7 @@ def Elbow(encoded_data):
 
     elbow_k = np.argmax(second_differences) + 2
     if elbow_k < 4:
+        print(f"Original K is {elbow_k}. It will be set to 4")
         elbow_k = 4
     print(f"Optimal number of clusters by Automated Elbow Method: {elbow_k}")
     
@@ -179,9 +180,7 @@ def collect_activations(model_name, data, tokenizer, device, model, Layer_num = 
     return activations
 
 
-def get_sentence_core_neurons(model_name, model, tokenizer, precessed_data, Layer_num, device, token_sparsity, sparsity, neuron_num):
-    
-    activations = collect_activations(model_name, precessed_data, tokenizer, device, model)
+def get_sentence_core_neurons(model_name, Layer_num, activations, token_sparsity, sparsity, neuron_num = None):
     
     SEN_F = []
     str_act = get_layer_name(model_name, Layer_num)
@@ -195,7 +194,7 @@ def get_sentence_core_neurons(model_name, model, tokenizer, precessed_data, Laye
         SEN_F.append(core_neurons.numpy())
 
     
-    return activations, SEN_F
+    return SEN_F
 
 
 

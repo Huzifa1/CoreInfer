@@ -1,7 +1,6 @@
 import torch
 import time
 from pathlib import Path
-from transformers import AutoModelForCausalLM, AutoTokenizer
 from utils import *
 from common import *
 
@@ -99,11 +98,3 @@ if __name__ == '__main__':
 
     main(args.method, args.model_name, args.checkpoint_path, args.sparsity, args.start_num, args.end_num, args.token_sparsity, args.prompt, args.memory_limit,
         args.num_fewshot, args.task_type, args.num_tokens_to_generate, args.device, args.cluster_path, args.cpu_only)
-
-
-
-
-
-
-
-

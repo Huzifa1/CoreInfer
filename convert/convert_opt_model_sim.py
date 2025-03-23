@@ -28,7 +28,7 @@ class ReduceLayer(nn.Module):
         self.cpu_only = cpu_only
         self.filtered_W = torch.zeros((remained_neurons,weight.size(1))).to(torch.float16).cpu()
         self.filtered_bias = torch.zeros(remained_neurons).to(torch.float16).cpu()
-        self.act_list = act_list[:][:remained_neurons]
+        self.act_list = [sublist[:remained_neurons] for sublist in act_list]
         self.num = num
         self.kmeans = kmeans
         self.mlb_loaded = mlb_loaded
@@ -92,7 +92,7 @@ class ReduceLayer_fc2(nn.Module):
         self.memory_limit = memory_limit
         self.cpu_only = cpu_only
         self.filtered_W = torch.zeros((weight.size(0),remained_neurons)).to(torch.float16).cpu()
-        self.act_list = act_list[:][:remained_neurons]
+        self.act_list = [sublist[:remained_neurons] for sublist in act_list]
         self.weight_updated = False
         
     def forward(self, x):

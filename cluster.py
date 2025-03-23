@@ -1,11 +1,6 @@
 import torch
-import time
 from pathlib import Path
-from transformers import OPTForCausalLM
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from datasets import load_dataset
 from datasets import load_from_disk
-import re
 from sklearn.cluster import KMeans
 import numpy as np
 from sklearn.preprocessing import MultiLabelBinarizer
@@ -17,7 +12,7 @@ from common import *
 default_device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
-def save_cluster(model_name, SEN_F,cluster_path):
+def save_cluster(model_name, SEN_F, cluster_path):
     data = SEN_F
 
     model_family = get_model_family(model_name)
@@ -63,28 +58,31 @@ def save_neurons(activations, model_name, model, cluster, cluster_path, sparsity
         folder_path = os.path.join(parent_directory, folder_name)
         os.makedirs(folder_path, exist_ok=True)
     
-    value_ratio = 0.4
-    
+    value_ratio = 0.2
+    model_family = get_model_family(model_name)
+    num_neurons = MODEL_INFO[model_family]['num_neurons']
+
     model.to(device)
-    current_activations = []
     
     for cluster_num in range(0, k):
+        current_activations = []
         positions = np.where(cluster == cluster_num)[0]
         for i in positions:
             current_activations.append(activations[i])
+
+        print(f"Current len of activations in cluster {cluster_num} is: {len(current_activations)}")
         
         for Layer_num in tqdm(range(0, 32), desc=f"Saving neurons for cluster: {cluster_num}"):
-            layer_act = []
-            str_act = get_layer_name(model_name, Layer_num)
-            for i in range(len(current_activations)):
-                tensor = current_activations[i][str_act].cpu()
-                if "opt" in model_name:
-                    layer_act.append(tensor)
-                elif "llama" in model_name:
-                    layer_act.append(tensor.squeeze(0))
-
-            A_tensor = torch.cat(layer_act, dim=0)
-            indices_all = get_core_neurons(A_tensor, value_ratio, sparsity)
+            
+            SEN_F = get_sentence_core_neurons(model_name, Layer_num, current_activations, value_ratio, sparsity, num_neurons)
+            
+            data_flattened = [item for sublist in SEN_F for item in sublist]
+            data_flattened = torch.tensor(data_flattened)
+            unique_numbers, counts = data_flattened.unique(return_counts=True, sorted=True)
+            sorted_indices = torch.argsort(counts, descending=True)
+            sorted_indices_clu = unique_numbers[sorted_indices]
+            remained_neurons = int(num_neurons * sparsity)
+            indices_all = sorted_indices_clu[:remained_neurons].cpu()
             
             with open(f'{cluster_path}/neuron_activation/{Layer_num}/cluster_{cluster_num}.pkl', 'wb') as f:
                 pickle.dump(indices_all, f)
@@ -101,7 +99,9 @@ def main(model_name, dataset_name, checkpoint_path, dataset_path, memory_limit, 
     
     precessed_data = process_data(dataset, dataset_name)
     
-    activations, SEN_F = get_sentence_core_neurons(model_name, model, tokenizer, precessed_data, Layer_num, device, 0.4, 1, 3000)
+    activations = collect_activations(model_name, precessed_data, tokenizer, device, model)
+
+    SEN_F = get_sentence_core_neurons(model_name, Layer_num, activations, 0.4, 1, 3000)
     
     cluster, k = save_cluster(model_name, SEN_F, cluster_path)
     
