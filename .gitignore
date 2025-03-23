@@ -1,4 +1,4 @@
-corevenv/
+.coreinfer/
 dataset/
 models/
 ignore/

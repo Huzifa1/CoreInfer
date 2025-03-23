@@ -2,7 +2,6 @@ import torch.nn as nn
 import gc
 from scipy.stats import norm
 import torch
-from sentence_transformers import SentenceTransformer, util
 import numpy as np
 import pickle
 from sklearn.preprocessing import MultiLabelBinarizer
