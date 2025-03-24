@@ -6,25 +6,31 @@ import common
 
 global_cluster = None
 
+class CustomMLPLayer(nn.Module):
+    def __init__(self, weight, act_list, num, kmeans, mlb_loaded, sparsity, memory_limit, cpu_only, name):
+        super(CustomMLPLayer, self).__init__()
 
-class DownLayer(nn.Module):
-    def __init__(self, weight, act_list, num, kmeans, mlb_loaded, sparsity, memory_limit, cpu_only):
-        super(DownLayer, self).__init__()
-
-        remained_neurons = int(weight.size(1) * sparsity)
         device = torch.device("cpu") if memory_limit or cpu_only else torch.device("cuda")
+        
+        if ("down" in name):
+            remained_neurons = int(weight.size(1) * sparsity)
+            self.filtered_W = torch.zeros((weight.size(0), remained_neurons)).to(torch.float16).to(device)
+        else:
+            remained_neurons = int(weight.size(0) * sparsity)
+            self.filtered_W = torch.zeros((remained_neurons, weight.size(1))).to(torch.float16).to(device)
 
-        self.weight = weight.clone()
-        self.remained_neurons = remained_neurons
-        self.memory_limit = memory_limit
-        self.act_list = [sublist[:remained_neurons] for sublist in act_list]
+        
+        self.name = name
         self.num = num
         self.kmeans = kmeans
         self.mlb_loaded = mlb_loaded
-        self.weight_updated = False
+        self.weight = weight.clone()
+        self.remained_neurons = remained_neurons
+        self.memory_limit = memory_limit
         self.cpu_only = cpu_only
-        self.filtered_W = torch.zeros((weight.size(0),remained_neurons)).to(torch.float16).to(device)
-        
+        self.act_list = [sublist[:remained_neurons] for sublist in act_list]
+        self.weight_updated = False
+
     def forward(self, x):
         device = torch.device("cpu") if self.cpu_only else torch.device("cuda")
 
@@ -32,12 +38,13 @@ class DownLayer(nn.Module):
             self.weight_updated = False
             self.weight = self.weight.to(device)
             true_value = x @ self.weight.T.to(device)
-            
-            x1 = x.clone()
-            if self.num == 25:
+            if self.memory_limit or self.cpu_only:
+                self.weight = self.weight.cpu()
+
+            if "gate" in self.name and self.num == 25:
                 # Here, for some reason they pick top 3000 neurons from the sorted_indices_clu
                 # So to match the function params, set sparsity to 1 and neuron_num to 3000
-                indices_all = common.get_core_neurons(x1, 0.4, 1, 3000)
+                indices_all = common.get_core_neurons(true_value.squeeze(0), 0.4, 1, 3000)
 
                 indices_all_2d = [indices_all.tolist()]
                 new_data = self.mlb_loaded.transform(indices_all_2d)
@@ -57,47 +64,10 @@ class DownLayer(nn.Module):
             if not self.weight_updated:
                 cluster_num = global_cluster
                 activated_list = self.act_list[cluster_num].tolist()
-                self.filtered_W = self.weight[:, activated_list].clone().to(device)
-                if self.memory_limit or self.cpu_only:
-                    self.weight = self.weight.cpu()
-                self.weight_updated = True
-
-            true_value = x @ self.filtered_W.T.to(device)
-            
-        return true_value
-
-
-
-class UpGateLayer(nn.Module):
-    def __init__(self, weight, act_list, sparsity, memory_limit, cpu_only):
-        super(UpGateLayer, self).__init__()
-
-        remained_neurons = int(weight.size(0) * sparsity)
-        device = torch.device("cpu") if memory_limit or cpu_only else torch.device("cuda")
-        
-        self.weight = weight.clone()
-        self.remained_neurons = remained_neurons
-        self.memory_limit = memory_limit
-        self.cpu_only = cpu_only
-        self.act_list = [sublist[:remained_neurons] for sublist in act_list]
-        self.weight_updated = False
-        self.filtered_W = torch.zeros((remained_neurons, weight.size(1))).to(torch.float16).to(device)
-        
-    def forward(self, x):
-        device = torch.device("cpu") if self.cpu_only else torch.device("cuda")
-
-        if x.size(1)>1:
-            self.weight_updated = False
-            self.weight = self.weight.to(device)
-            true_value = x @ self.weight.T
-            if self.memory_limit or self.cpu_only:
-                self.weight = self.weight.cpu()
-
-        else:
-            if not self.weight_updated:
-                cluster_num = global_cluster
-                activated_list = self.act_list[cluster_num].tolist()
-                self.filtered_W = self.weight[activated_list,:].clone().to(device)
+                if ("down" in self.name):
+                    self.filtered_W = self.weight[:, activated_list].clone().to(device)
+                else:
+                    self.filtered_W = self.weight[activated_list,:].clone().to(device)
                 if self.memory_limit or self.cpu_only:
                     self.weight = self.weight.cpu()
                 self.weight_updated = True
@@ -105,9 +75,6 @@ class UpGateLayer(nn.Module):
             true_value = x @ self.filtered_W.T.to(device)
             
         return true_value
-
-
-
 
 
 def convert_llama_model_sim(model, num_layers, sparsity, start_num, end_num, memory_limit, cluster_path, cpu_only):
@@ -125,10 +92,7 @@ def convert_llama_model_sim(model, num_layers, sparsity, start_num, end_num, mem
                 else:
                     parent = model # for lm_head
                 
-                if "down" in name:
-                    NewLayer = DownLayer(module.weight, Predictor[num], num, kmeans, mlb_loaded, sparsity, memory_limit, cpu_only)
-                else:
-                    NewLayer = UpGateLayer(module.weight, Predictor[num], sparsity, memory_limit, cpu_only)
+                NewLayer = CustomMLPLayer(module.weight, Predictor[num], num, kmeans, mlb_loaded, sparsity, memory_limit, cpu_only, name)
                 setattr(parent, attr_name, NewLayer)
                 del module
                 

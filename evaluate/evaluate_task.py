@@ -20,9 +20,11 @@ from lm_eval import evaluator
 def evaluate(task_name, model, tokenizer, num_fewshot, device):
     hflm = HFLM(pretrained=model, tokenizer=tokenizer)
     results = evaluator.simple_evaluate(
-    model=hflm,
-    tasks=[task_name],
-    num_fewshot=num_fewshot)
+        model = hflm,
+        tasks = [task_name],
+        num_fewshot=num_fewshot,
+        limit = 10
+    )
     print(results['results'])
 
 
