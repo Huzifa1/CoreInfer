@@ -11,6 +11,7 @@ import re
 import os
 import pickle
 from tqdm import tqdm
+import time
 
 MODEL_INFO = {
     'opt': {
@@ -52,6 +53,8 @@ def get_layer_number(model_name, layer_name):
 
 
 def load_model(model_name, start_num, end_num, checkpoint_path, device, memory_limit):
+    start_time = time.time()
+
     if memory_limit == True:
         model, num_layers = load_model_memory_limit(checkpoint_path, start_num, end_num, model_name)
     else:
@@ -63,12 +66,17 @@ def load_model(model_name, start_num, end_num, checkpoint_path, device, memory_l
     if tokenizer.pad_token is None:
         tokenizer.add_special_tokens({'pad_token': '[PAD]'})
         model.resize_token_embeddings(len(tokenizer), mean_resizing=False)
-        
+    
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"Done. Loaded model in {elapsed_time:.2f} seconds.\n")
     return model, tokenizer, num_layers
 
 
 
 def convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path=None, cpu_only = False):
+    start_time = time.time()
+
     if "opt" in model_name:
         if method == 'stable_guided':
             model = convert_opt_model(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
@@ -81,7 +89,10 @@ def convert_model(method, model, model_name, num_layers, sparsity, start_num, en
             model = convert_llama_model(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
         elif method == 'similarity_guided':
             model = convert_llama_model_sim(model, num_layers, sparsity, start_num, end_num, memory_limit, cluster_path, cpu_only)
-        
+    
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"Done. Converted model in {elapsed_time:.2f} seconds.\n")
     return model
 
 

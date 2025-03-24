@@ -104,7 +104,6 @@ def convert_opt_model(model, sparsity, start_num, end_num, token_sparsity, memor
                 
    
     gc.collect()
-    print("Converted Model Done")
     
     return model
  

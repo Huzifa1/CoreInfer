@@ -116,6 +116,4 @@ def convert_llama_model(model, sparsity, start_num, end_num, token_sparsity, mem
 
     gc.collect()
     
-    print("Converted Model Done")
-    
     return model

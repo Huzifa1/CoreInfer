@@ -135,6 +135,5 @@ def convert_opt_model_sim(model, num_layers, sparsity, start_num, end_num, memor
                 del module
     
     gc.collect()
-    print("Converted Model Done")
     
     return model

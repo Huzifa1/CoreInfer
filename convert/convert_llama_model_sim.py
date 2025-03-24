@@ -97,6 +97,5 @@ def convert_llama_model_sim(model, num_layers, sparsity, start_num, end_num, mem
                 del module
                 
     gc.collect()
-    print("Converted Model Done")
     
     return model

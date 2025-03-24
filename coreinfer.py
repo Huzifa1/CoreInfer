@@ -16,12 +16,17 @@ def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_t
         prompt = process_prompt_similarity(ori_prompt, task_type)
     input_ids = tokenizer.encode(prompt, return_tensors='pt').to(device)
 
-
+    pre_fill_start_time = time.time()
+    print("Starting the prefilling stage...", end="")
     eos_token_id = tokenizer.convert_tokens_to_ids('.')
     with torch.no_grad():
         outputs = model(input_ids, use_cache=True)
         past_key_values = outputs.past_key_values
     
+    pre_fill_end_time = time.time()
+    pre_fill_elapsed_time = pre_fill_end_time - pre_fill_start_time
+    print(f"Done. Prefilling stage calculated in {pre_fill_elapsed_time:.2f} seconds.\n")
+
     generated = input_ids
     
     print(ori_prompt) 
@@ -53,7 +58,7 @@ def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_t
     elapsed_time = end_time - start_time
     tokens_per_second = num_generated_tokens / elapsed_time
     
-    print(f'\nGenerated {num_generated_tokens} tokens in {elapsed_time:.2f} seconds.')
+    print(f'\n\nGenerated {num_generated_tokens} tokens in {elapsed_time:.2f} seconds.')
     print(f'Decoding speed: {tokens_per_second:.2f} tokens/second')
 
 
