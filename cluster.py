@@ -70,19 +70,19 @@ def save_neurons(activations, model_name, model, cluster, cluster_path, sparsity
         for i in positions:
             current_activations.append(activations[i])
 
-        print(f"Current len of activations in cluster {cluster_num} is: {len(current_activations)}")
-        
         for Layer_num in tqdm(range(0, 32), desc=f"Saving neurons for cluster: {cluster_num}"):
-            
-            SEN_F = get_sentence_core_neurons(model_name, Layer_num, current_activations, value_ratio, sparsity, num_neurons)
-            
-            data_flattened = [item for sublist in SEN_F for item in sublist]
-            data_flattened = torch.tensor(data_flattened)
-            unique_numbers, counts = data_flattened.unique(return_counts=True, sorted=True)
-            sorted_indices = torch.argsort(counts, descending=True)
-            sorted_indices_clu = unique_numbers[sorted_indices]
-            remained_neurons = int(num_neurons * sparsity)
-            indices_all = sorted_indices_clu[:remained_neurons].cpu()
+           
+            layer_act = []
+            str_act = get_layer_name(model_name, Layer_num)
+            for i in range(len(current_activations)):
+                tensor = current_activations[i][str_act].cpu()
+                if "llama" in model_name:
+                    tensor = tensor.squeeze(0)
+                layer_act.append(tensor)
+
+            A_tensor = torch.cat(layer_act, dim=0)
+
+            indices_all = get_core_neurons(A_tensor, value_ratio, sparsity, num_neurons)
             
             with open(f'{cluster_path}/neuron_activation/{Layer_num}/cluster_{cluster_num}.pkl', 'wb') as f:
                 pickle.dump(indices_all, f)

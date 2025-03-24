@@ -51,6 +51,8 @@ class ReduceLayer(nn.Module):
                     
                 global global_cluster
                 global_cluster = predictions[0]
+                print("Current Input is predicted to be in cluster: ", global_cluster)
+                
                 del indices_all_2d, new_data
                 gc.collect()
         
@@ -90,8 +92,9 @@ class ReduceLayer_fc2(nn.Module):
         
     def forward(self, x):
         device = torch.device("cpu") if self.cpu_only else torch.device("cuda")
-
+        
         if x.size(0)>1:
+            self.weight_updated = False
             self.weight = self.weight.to(device)
             self.bias = self.bias.to(device)
             true_value = x @ self.weight.T + self.bias

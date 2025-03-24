@@ -18,6 +18,7 @@ def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_t
 
     pre_fill_start_time = time.time()
     print("Starting the prefilling stage...", end="")
+    
     eos_token_id = tokenizer.convert_tokens_to_ids('.')
     with torch.no_grad():
         outputs = model(input_ids, use_cache=True)
