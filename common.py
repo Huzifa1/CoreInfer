@@ -52,11 +52,11 @@ def get_layer_number(model_name, layer_name):
     raise ValueError("Model Name not supported")
 
 
-def load_model(model_name, start_num, end_num, checkpoint_path, device, memory_limit):
+def load_model(model_name, start_num, end_num, checkpoint_path, device, memory_limit, cpu_only: bool):
     start_time = time.time()
 
     if memory_limit == True:
-        model, num_layers = load_model_memory_limit(checkpoint_path, start_num, end_num, model_name)
+        model, num_layers = load_model_memory_limit(checkpoint_path, start_num, end_num, model_name, cpu_only)
     else:
         model = AutoModelForCausalLM.from_pretrained(checkpoint_path, device_map=device, torch_dtype=torch.float16)
         num_layers = model.config.num_hidden_layers
