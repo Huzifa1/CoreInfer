@@ -131,27 +131,33 @@ def process_data(dataset, dataset_name):
     return process_data
     
 
-def load_opt_param(name, param, start_num, end_num):
+def load_opt_param(name, param, start_num, end_num, cpu_only: bool):
     num = 0
     if len(name.split('.'))>4:
         num = int(name.split('.')[3])                    
     if not (num>start_num and num<end_num and ('fc1' in name or 'fc2' in name)):
-        param.data = param.data.to('cuda:0').half()
+        if (cpu_only):
+            param.data = param.data.to('cpu').half()
+        else:
+            param.data = param.data.to('cuda:0').half()
 
-def load_llama_param(num, name, param, start_num, end_num):
+def load_llama_param(num, name, param, start_num, end_num, cpu_only: bool):
     num = 0
     if len(name.split('.'))>3:
         num = int(name.split('.')[2])
     if not (num>start_num and num<end_num and ('gate_proj' in name or 'up_proj' in name or 'down_proj' in name)):
-        param.data = param.data.to('cuda:0').half()
+        if (cpu_only):
+            param.data = param.data.to('cpu').half()
+        else:
+            param.data = param.data.to('cuda:0').half()
 
-def load_model_memory_limit(checkpoint_path, start_num, end_num, model_name):
+def load_model_memory_limit(checkpoint_path, start_num, end_num, model_name, cpu_only: bool):
     model = AutoModelForCausalLM.from_pretrained(checkpoint_path, torch_dtype=torch.float16, device_map='cpu')
     num_layers = model.config.num_hidden_layers
     for name, param in model.named_parameters():
         if ("opt" in model_name):
-            load_opt_param(name, param, start_num, end_num)
+            load_opt_param(name, param, start_num, end_num, cpu_only)
         elif ("llama" in model_name):
-            load_llama_param(name, param, start_num, end_num)
+            load_llama_param(name, param, start_num, end_num, cpu_only)
             
     return model, num_layers
