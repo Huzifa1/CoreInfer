@@ -15,7 +15,7 @@ import time
 
 MODEL_INFO = {
     'opt': {
-        'num_neurons': 16383,
+        'num_neurons': 16384,
         'activation_fn': torch.nn.ReLU,
     },
     'llama': {
