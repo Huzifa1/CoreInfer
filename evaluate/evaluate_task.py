@@ -56,7 +56,7 @@ if __name__ == '__main__':
     parser.add_argument('--memory_limit', action='store_true', help='Enable memory limit.')
     parser.add_argument('--method', type=str, choices=['stable_guided', 'similarity_guided'], default='stable_guided', help='Method to use (default: stable_guided).')
     parser.add_argument('--cluster_path', type=str, default=None, help='Optional cluster path.')
-    parser.add_argument('--cpu-only', action='store_true', help='Run inference on CPU only.')
+    parser.add_argument('--cpu_only', action='store_true', help='Run inference on CPU only.')
 
     args = parser.parse_args()
 

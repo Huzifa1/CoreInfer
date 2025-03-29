@@ -122,7 +122,7 @@ if __name__ == '__main__':
     parser.add_argument('--device', type=str, default=default_device, help='Device to use')
     parser.add_argument('--sparsity', type=float, default=0.4, help='Sparsity level.')
     parser.add_argument('--memory_limit', action='store_true', help='Enable memory limit.')
-    parser.add_argument('--cpu-only', action='store_true', help='Run inference on CPU only.')
+    parser.add_argument('--cpu_only', action='store_true', help='Run inference on CPU only.')
 
     args = parser.parse_args()
 
