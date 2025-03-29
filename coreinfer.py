@@ -130,13 +130,13 @@ if __name__ == '__main__':
     parser.add_argument('--sparsity', type=float, default=0.4, help='Sentence Sparsity level.')
     parser.add_argument('--start_num', type=int, default=5, help='Start layer.')
     parser.add_argument('--end_num', type=int, default=27, help='End layer.')
-    parser.add_argument('--top-p', type=float, default=0.9, help='When set, will use top-p sampling')
+    parser.add_argument('--top_p', type=float, default=0.9, help='When set, will use top-p sampling')
     parser.add_argument('--sampling-method', type=str, default="greedy", choices=["greedy", "top-p"], help='Choose sampling method')
     parser.add_argument('--token_sparsity', type=float, default=0.2, help='Token Sparsity level.')
     parser.add_argument('--memory_limit', action='store_true', help='Enable memory limit.')
     parser.add_argument('--method', type=str, choices=['stable_guided', 'similarity_guided'], default='stable_guided', help='Method to use (default: stable_guided).')
     parser.add_argument('--cluster_path', type=str, default=None, help='Optional cluster path.')
-    parser.add_argument('--cpu-only', action='store_true', help='Run inference on CPU only.')
+    parser.add_argument('--cpu_only', action='store_true', help='Run inference on CPU only.')
 
     args = parser.parse_args()
 
