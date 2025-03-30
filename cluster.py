@@ -130,4 +130,7 @@ if __name__ == '__main__':
         default_device = 'cpu'
         args.device = 'cpu'
 
+    if args.cpu_only and args.memory_limit:
+        parser.error("The options --cpu_only and --memory_limit cannot be used together.")
+
     main(args.model_name, args.dataset_name, args.checkpoint_path, args.dataset_path, args.memory_limit, args.Layer_num, args.cluster_path, args.sparsity, args.device)

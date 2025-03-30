@@ -81,6 +81,9 @@ if __name__ == '__main__':
     if (args.cpu_only):
         default_device = 'cpu'
         args.device = 'cpu'
+
+    if args.cpu_only and args.memory_limit:
+        parser.error("The options --cpu_only and --memory_limit cannot be used together.")
     
     main(args.method, args.model_name, args.checkpoint_path, args.sparsity, args.start_num, args.end_num, args.token_sparsity, args.num_tokens_to_generate, 
          args.memory_limit, args.device, args.cluster_path, args.cpu_only)
