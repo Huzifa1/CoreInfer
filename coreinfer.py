@@ -49,7 +49,7 @@ def top_p_sampling(next_token_logits, tokenizer, top_p, generated):
 # Test Model
 def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p):
     model.eval()
-    if method == 'stable_guided':
+    if method == 'stable_guided' or 'dynamic_cut':
         prompt = process_prompt_stable(ori_prompt, task_type, num_fewshot)
     elif method == 'similarity_guided':
         prompt = process_prompt_similarity(ori_prompt, task_type)
@@ -134,7 +134,7 @@ if __name__ == '__main__':
     parser.add_argument('--sampling-method', type=str, default="greedy", choices=["greedy", "top-p"], help='Choose sampling method')
     parser.add_argument('--token_sparsity', type=float, default=0.2, help='Token Sparsity level.')
     parser.add_argument('--memory_limit', action='store_true', help='Enable memory limit.')
-    parser.add_argument('--method', type=str, choices=['stable_guided', 'similarity_guided'], default='stable_guided', help='Method to use (default: stable_guided).')
+    parser.add_argument('--method', type=str, choices=['stable_guided', 'similarity_guided', 'dynamic_cut', 'dense'], default='stable_guided', help='Method to use (default: stable_guided).')
     parser.add_argument('--cluster_path', type=str, default=None, help='Optional cluster path.')
     parser.add_argument('--cpu_only', action='store_true', help='Run inference on CPU only.')
 

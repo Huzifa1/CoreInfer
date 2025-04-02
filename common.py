@@ -3,6 +3,11 @@ from convert.convert_opt_model import convert_opt_model
 from convert.convert_opt_model_sim import convert_opt_model_sim
 from convert.convert_llama_model import convert_llama_model
 from convert.convert_llama_model_sim import convert_llama_model_sim
+
+from convert.convert_llama_model_dynamic_cut import convert_llama_model_dynamic_cut
+from convert.convert_llama_model_static_cut import convert_llama_model_static_cut
+from convert.convert_llama_model_dense import convert_llama_model_dense
+
 from utils import *
 from sklearn.cluster import KMeans
 import numpy as np
@@ -89,6 +94,12 @@ def convert_model(method, model, model_name, num_layers, sparsity, start_num, en
             model = convert_llama_model(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
         elif method == 'similarity_guided':
             model = convert_llama_model_sim(model, num_layers, sparsity, start_num, end_num, memory_limit, cluster_path, cpu_only)
+        elif method == 'dynamic_cut':
+            model = convert_llama_model_dynamic_cut(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
+        elif method == 'static_cut':
+            model = convert_llama_model_static_cut(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
+        elif method == 'dense':
+            model = convert_llama_model_dense(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
     
     end_time = time.time()
     elapsed_time = end_time - start_time
