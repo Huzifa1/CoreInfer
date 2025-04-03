@@ -3,7 +3,7 @@ import gc
 import torch
 from tqdm import tqdm
 import common
-from convert.relevant_neurons import get_neuron_scores, get_relevant_neuron_indices_static
+from convert.relevant_neurons import get_neuron_scores, get_relevant_neuron_indices_static, get_mean_average_activation_of_file
 
 global_cluster = None
 
@@ -45,7 +45,9 @@ class CustomMLPLayer(nn.Module):
                 squeezed_x = torch.Tensor(x.clone().squeeze())
                 
                 neuron_scores = get_neuron_scores(squeezed_x)
-                relevant_indices = get_relevant_neuron_indices_static(neuron_scores)
+                filepath = "dataset\\dataset_run_dynamic_cut_2025_04_03_19_49.txt"
+                cut_off_ratio_static = get_mean_average_activation_of_file(filepath)
+                relevant_indices = get_relevant_neuron_indices_static(neuron_scores, cut_off_ratio_static)
                 
                 # indices_all = common.get_core_neurons(squeezed_x, token_sparsity, sparsity, self.weight.size(1))
                 indices_all = torch.Tensor(relevant_indices).int().cpu()

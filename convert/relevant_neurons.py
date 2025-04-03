@@ -36,9 +36,7 @@ def get_neuron_score_with_value_and_frequency(x: torch.Tensor, sum_weight: float
 
 
 
-
-def get_relevant_neuron_indices_static(neuron_scores: torch.Tensor):
-    cut_off_ratio_static = 0.8
+def get_relevant_neuron_indices_static(neuron_scores: torch.Tensor, cut_off_ratio_static: float):
     sorted_values, sorted_indices = neuron_scores.sort(descending=True)
     limit_index = int(len(neuron_scores) * cut_off_ratio_static)
     return sorted_indices[:limit_index]
@@ -103,3 +101,21 @@ def get_neurons_by_means(squeezed_x):
     # indices_all = common.get_core_neurons(squeezed_x, token_sparsity, sparsity, self.weight.size(1))
     indices = over_mean_activation_value_indices
     return indices
+
+
+
+
+
+def get_mean_average_activation_of_file(filepath):
+    with open(filepath) as file:
+        content = file.readlines()
+    
+    mean_activation_ratios = list()
+    for line in content:
+        if ("Mean activation ratio: " in line):
+            mean_activation_ratio = float(line.replace("Mean activation ratio: ", ""))
+            mean_activation_ratios.append(mean_activation_ratio)
+    
+    overall_mean_activation_ratio = float(torch.Tensor(mean_activation_ratios).mean())
+    return overall_mean_activation_ratio
+            
