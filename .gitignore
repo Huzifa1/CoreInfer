@@ -2,6 +2,7 @@
 dataset/
 models/
 ignore/
+results/
 
 *.pyc
 
