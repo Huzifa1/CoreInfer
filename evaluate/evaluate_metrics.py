@@ -89,7 +89,7 @@ with open(input_path, "r") as f:
 
 dataset = load_from_disk(f"../dataset/{dataset_name}")
 
-if (dataset_name == "trurthul_qa"):
+if (dataset_name == "truthful_qa"):
     references = dataset["validation"]["correct_answers"][:len(predictions)]
     # Remove empty references
     filtered_references = [[item for item in row if item != ""] for row in references]
