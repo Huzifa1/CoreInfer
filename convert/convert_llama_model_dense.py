@@ -49,7 +49,7 @@ class CustomMLPLayer(nn.Module):
                 #     self.weight = self.weight.cpu()
                 #     self.filtered_W = torch.zeros_like(self.weight).cuda().to(torch.float16)
 
-                indices_all = torch.arange(0, x.shape[2])
+                indices_all = torch.arange(0, x.shape[2]).cpu()
                 # self.filtered_W = self.weight[:, indices_all].clone().to(device)
                 self.filtered_W = self.weight[:, indices_all].to(device)
                 

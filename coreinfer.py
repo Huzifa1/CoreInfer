@@ -101,7 +101,14 @@ def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_t
     
     print(f'\n\nGenerated {num_generated_tokens} tokens in {elapsed_time:.2f} seconds.')
     print(f'Decoding speed: {tokens_per_second:.2f} tokens/second')
-
+    
+    if (method == 'dynamic_cut'):
+        activation_ratios = []
+        for layer in model.custom_layers:
+            if (layer.activation_ratio > 0):
+                activation_ratios.append(layer.activation_ratio)
+        mean_activation_ratio = torch.Tensor(activation_ratios).mean()
+        print("\nMean activation ratio: {}".format(mean_activation_ratio))
 
 
 
@@ -134,7 +141,7 @@ if __name__ == '__main__':
     parser.add_argument('--sampling-method', type=str, default="greedy", choices=["greedy", "top-p"], help='Choose sampling method')
     parser.add_argument('--token_sparsity', type=float, default=0.2, help='Token Sparsity level.')
     parser.add_argument('--memory_limit', action='store_true', help='Enable memory limit.')
-    parser.add_argument('--method', type=str, choices=['stable_guided', 'similarity_guided', 'dynamic_cut', 'dense'], default='stable_guided', help='Method to use (default: stable_guided).')
+    parser.add_argument('--method', type=str, choices=['stable_guided', 'similarity_guided', 'dynamic_cut', 'dense', 'static_cut'], default='stable_guided', help='Method to use (default: stable_guided).')
     parser.add_argument('--cluster_path', type=str, default=None, help='Optional cluster path.')
     parser.add_argument('--cpu_only', action='store_true', help='Run inference on CPU only.')
 

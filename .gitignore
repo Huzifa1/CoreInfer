@@ -1,4 +1,5 @@
 .coreinfer/
+coreinfer/
 dataset/
 models/
 ignore/

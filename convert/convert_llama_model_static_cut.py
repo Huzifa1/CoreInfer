@@ -3,6 +3,7 @@ import gc
 import torch
 from tqdm import tqdm
 import common
+from convert.relevant_neurons import get_neuron_scores, get_relevant_neuron_indices_static
 
 global_cluster = None
 
@@ -43,43 +44,11 @@ class CustomMLPLayer(nn.Module):
             if "down" in self.name:
                 squeezed_x = torch.Tensor(x.clone().squeeze())
                 
-                # TODO: Make static cut here
-                
-                number_of_neurons = squeezed_x.shape[1]
-                ratio_of_activated_neurons_per_token = list()
-                neuron_activation_count = torch.zeros(number_of_neurons)
-                overall_activation_after_relu = torch.zeros(number_of_neurons)
-                for activation_of_token_raw in squeezed_x:
-                    activation_of_token = torch.nn.ReLU()(activation_of_token_raw)
-                    overall_activation_after_relu += activation_of_token
-                    activated_neurons = (activation_of_token > 0)
-                    
-                    neuron_activation_count += activated_neurons
-                    number_of_activated_neurons_of_token = activated_neurons.sum()
-                    ratio_of_activated_neurons = number_of_activated_neurons_of_token / number_of_neurons
-                    ratio_of_activated_neurons_per_token.append(ratio_of_activated_neurons)
-                    
-                mean_ratio_of_activated_neuron = torch.Tensor(ratio_of_activated_neurons_per_token).mean()
-                
-                cut_off_ratio_to_mean_activation_count = 0.95
-                mean_activation_count = float(neuron_activation_count.mean())
-                cut_off_activation_count = int(mean_activation_count * cut_off_ratio_to_mean_activation_count)
-                over_mean_activation_count_indices = [idx for idx, activation_count in enumerate(neuron_activation_count) if activation_count > cut_off_activation_count]
-                number_of_activated_indices = len(over_mean_activation_count_indices)
-                ratio_of_activated_neurons = number_of_activated_indices / number_of_neurons
-                print("layer {}: activation count sparsity of {}".format(self.num, ratio_of_activated_neurons))
-                
-                cut_off_ratio_to_mean_activation_value = 0.8
-                mean_activation_value = float(overall_activation_after_relu.mean())
-                cut_off_activation_value = mean_activation_value * cut_off_ratio_to_mean_activation_value
-                over_mean_activation_value_indices = [idx for idx, activation_sum_value in enumerate(overall_activation_after_relu) if activation_sum_value > cut_off_activation_value]
-                ratio_of_activated_neurons = len(over_mean_activation_value_indices) / number_of_neurons
-                print("layer {}: activation value sparsity of {}".format(self.num, ratio_of_activated_neurons))
-                
-                
+                neuron_scores = get_neuron_scores(squeezed_x)
+                relevant_indices = get_relevant_neuron_indices_static(neuron_scores)
                 
                 # indices_all = common.get_core_neurons(squeezed_x, token_sparsity, sparsity, self.weight.size(1))
-                indices_all = over_mean_activation_count_indices
+                indices_all = torch.Tensor(relevant_indices).int().cpu()
 
                 if self.memory_limit:
                     self.weight = self.weight.cpu()
