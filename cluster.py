@@ -93,7 +93,7 @@ def save_neurons(activations, model_name, model, cluster, cluster_path, sparsity
 
 def main(model_name, dataset_name, checkpoint_path, dataset_path, memory_limit, Layer_num, cluster_path, sparsity, device):
     
-    model, tokenizer, num_layers = load_model(checkpoint_path, 6, 27, checkpoint_path, device, memory_limit)
+    model, tokenizer, num_layers = load_model(checkpoint_path, 5, 27, checkpoint_path, device, memory_limit)
     
     dataset = load_from_disk(dataset_path)
     
