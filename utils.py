@@ -122,6 +122,11 @@ def process_data(dataset, dataset_name):
         question = dataset['validation']['question']
         best_answer = dataset['validation']['best_answer']
         process_data = ['Question:' + a + 'Answer:' + b for a, b in zip(question, best_answer)]
+
+    elif dataset_name == "trivia_qa":
+        question = dataset['validation']['question']
+        answer = [x["value"] for x in dataset["validation"]["answer"]]
+        process_data = ['Question: ' + a + 'Answer: ' + b for a, b in zip(question, answer)]
         
     elif dataset_name == "wmt16-de-en":
         de = dataset['validation']['de']
