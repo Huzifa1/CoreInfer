@@ -7,6 +7,8 @@ from common import *
 from torch.nn.functional import softmax
 from datasets import load_from_disk
 
+from evaluation.evaluate_metrics_file import evaluate_inference
+
 default_device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
@@ -114,12 +116,12 @@ def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_t
 
 
 
-def main(filename, method, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, max_items, memory_limit, num_fewshot, task_type, num_tokens_to_generate, device, dataset_name, sampling_method, cluster_path = None, cpu_only = False, top_p = None):
+def main(filepath, method, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, max_items, memory_limit, num_fewshot, task_type, num_tokens_to_generate, device, dataset_name, sampling_method, no_evaluate: bool, cluster_path = None, cpu_only = False, top_p = None):
     model, tokenizer, num_layers = load_model(model_name, start_num, end_num, checkpoint_path, device, memory_limit)
 
     model = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path, cpu_only)
 
-    output_file = open(filename, "a")
+    output_file = open(filepath, "a")
     output_str = ""
     output_str += f"Command: {' '.join(sys.argv)}\n\n"
     dataset = load_from_disk(f"./dataset/{dataset_name}")
@@ -170,6 +172,10 @@ def main(filename, method, model_name, checkpoint_path, sparsity, start_num, end
         output_str = ""
     
     output_file.close()
+    
+    if not no_evaluate:
+        evaluate_inference(filepath)
+        
         
 
 
@@ -196,7 +202,8 @@ if __name__ == '__main__':
     parser.add_argument('--method', type=str, choices=['stable_guided', 'similarity_guided', 'dynamic_cut', 'dense', 'static_cut'], default='stable_guided', help='Method to use (default: stable_guided).')
     parser.add_argument('--cluster_path', type=str, default=None, help='Optional cluster path.')
     parser.add_argument('--cpu_only', action='store_true', help='Run inference on CPU only.')
-    parser.add_argument('--filename', type=str, default=None, help='filename to save output')
+    parser.add_argument('--filepath', type=str, default=None, help='filepath to save output')
+    parser.add_argument('--no_evaluate', action='store_true', help='do not do evaluation after inference')
 
     args = parser.parse_args()
 
@@ -207,9 +214,9 @@ if __name__ == '__main__':
     if args.cpu_only and args.memory_limit:
         parser.error("The options --cpu_only and --memory_limit cannot be used together.")
 
-    if (args.filename == None):
+    if (args.filepath == None):
         timestr = time.strftime("%Y_%m_%d_%H_%M")
-        args.filename = "dataset/dataset_run_{}_".format(args.method) + timestr + ".txt"
+        args.filepath = "dataset/dataset_run_{}_".format(args.method) + timestr + ".txt"
     
-    main(args.filename, args.method, args.model_name, args.checkpoint_path, args.sparsity, args.start_num, args.end_num, args.token_sparsity, args.max_items, args.memory_limit,
-        args.num_fewshot, args.task_type, args.num_tokens_to_generate, args.device, args.dataset_name, args.sampling_method, args.cluster_path, args.cpu_only, args.top_p)
+    main(args.filepath, args.method, args.model_name, args.checkpoint_path, args.sparsity, args.start_num, args.end_num, args.token_sparsity, args.max_items, args.memory_limit,
+        args.num_fewshot, args.task_type, args.num_tokens_to_generate, args.device, args.dataset_name, args.sampling_method, args.no_evaluate, args.cluster_path, args.cpu_only, args.top_p)

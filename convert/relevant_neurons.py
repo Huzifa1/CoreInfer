@@ -38,7 +38,7 @@ def get_neuron_score_with_value_and_frequency(x: torch.Tensor, sum_weight: float
 
 
 def get_relevant_neuron_indices_static(neuron_scores: torch.Tensor):
-    cut_off_ratio_static = 0.7
+    cut_off_ratio_static = 0.8
     sorted_values, sorted_indices = neuron_scores.sort(descending=True)
     limit_index = int(len(neuron_scores) * cut_off_ratio_static)
     return sorted_indices[:limit_index]
