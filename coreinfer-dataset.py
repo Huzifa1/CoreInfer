@@ -89,12 +89,14 @@ def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_t
             generated, next_token_id, next_token_text = top_p_sampling(next_token_logits, tokenizer, top_p, generated)
         
         print(next_token_text, end='', flush=True)
-        generated_text += next_token_text
     
         if next_token_id.item() == eos_token_id:
             break
         if '.' in next_token_text:
             break
+        
+        if not (generated_text == "" and next_token_text == " "):
+            generated_text += next_token_text
     
     end_time = time.time()
     
@@ -142,6 +144,15 @@ def main(filename, method, model_name, checkpoint_path, sparsity, start_num, end
             output_str += "Best Answer: {}\n".format(best_answer)
             generated_text = generate(method, model, tokenizer, question, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p)
             output_str += "Model Response: {}\n".format(generated_text)
+            
+            if (method == 'dynamic_cut'):
+                activation_ratios = []
+                for layer in model.custom_layers:
+                    if (layer.activation_ratio > 0):
+                        activation_ratios.append(layer.activation_ratio)
+                mean_activation_ratio = torch.Tensor(activation_ratios).mean()
+                output_str += "Mean activation ratio: {}\n".format(mean_activation_ratio)
+            
             output_str += "\n\n"
 
         elif dataset_name == "trivia_qa":
@@ -198,7 +209,7 @@ if __name__ == '__main__':
 
     if (args.filename == None):
         timestr = time.strftime("%Y_%m_%d_%H_%M")
-        args.filename = "dataset/dataset_run_{}_{}_".format(args.dataset_name, args.method) + timestr + ".txt"
+        args.filename = "dataset/dataset_run_{}_".format(args.method) + timestr + ".txt"
     
     main(args.filename, args.method, args.model_name, args.checkpoint_path, args.sparsity, args.start_num, args.end_num, args.token_sparsity, args.max_items, args.memory_limit,
         args.num_fewshot, args.task_type, args.num_tokens_to_generate, args.device, args.dataset_name, args.sampling_method, args.cluster_path, args.cpu_only, args.top_p)

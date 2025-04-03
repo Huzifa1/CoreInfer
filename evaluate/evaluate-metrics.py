@@ -1,5 +1,27 @@
 from evaluate import load
 
+def read_results_from_file(filename):
+    with open(filename) as file:
+        content = file.readlines()
+    
+    references = list()
+    predictions = list()
+    for line in content:
+        if "Best Answer: " in line:
+            references.append(line.replace("Best Answer: ", ""))
+        if "Model Response: " in line:
+            predictions.append(line.replace("Model Response: ", ""))
+    return references, predictions
+
+def convert_dict_to_string(dictionary: dict):
+    string = ""
+    for key, value in dictionary.items():
+        if (type(value) == dict):
+            string += "{}: {}\n".format(key, convert_dict_to_string(value))
+        else:
+            string += "{}: {}\n".format(key, value)
+    return string
+
 # Load metrics
 bleu = load("bleu")
 rouge = load("rouge")
@@ -15,12 +37,18 @@ references = [
     ["The Sun is at the center of the Solar System.", "Earth orbits the Sun."]
 ]
 
+filename = "dataset/dataset_run_dynamic_cut_2025_04_03_19_14.txt"
+references, predictions = read_results_from_file(filename)
+
+output_str = ""
+
 # Compute BLEU (Bilingual Evaluation Understudy)
 # Measures how similar the generated text is to the reference text.
 # Higher is better (range: 0 to 100).
 bleu_score = bleu.compute(predictions=predictions, references=references)
-print("Printing BLEU Score: ")
-print(bleu_score)
+output_str += "Printing BLEU Score: \n"
+output_str += convert_dict_to_string(bleu_score)
+output_str += "\n"
 
 # Compute ROUGE (Recall-Oriented Understudy for Gisting Evaluation)
 # Measures similarity between model-generated and reference text using n-grams.
@@ -30,10 +58,18 @@ print(bleu_score)
     # ROUGE-2 (Bigrams): Measures how many two-word sequences match.
     # ROUGE-L (Longest Common Subsequence): Captures overall fluency.
 rouge_score = rouge.compute(predictions=predictions, references=references)
-print("Printing ROUGE Score: ")
-print(rouge_score)
+output_str += "Printing ROUGE Score: \n"
+output_str += convert_dict_to_string(rouge_score)
+output_str += "\n"
 
 # Compute BERTScore (semantic similarity)
 bert_score = bertscore.compute(predictions=predictions, references=references, lang="en")
-print("Printing BERT Score: ")
-print(bert_score)
+output_str += "Printing BERT Score: \n"
+output_str += convert_dict_to_string(bert_score)
+output_str += "\n"
+
+output_filename = filename.replace("dataset_run", "evaluation")
+output_file = open(output_filename, "w")
+output_file.write(output_str)
+output_file.flush()
+output_file.close()
