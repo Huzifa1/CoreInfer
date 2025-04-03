@@ -51,7 +51,6 @@ class ReduceLayer(nn.Module):
                     
                 global global_cluster
                 global_cluster = predictions[0]
-                print("Current Input is predicted to be in cluster: ", global_cluster)
                 
                 del indices_all_2d, new_data
                 gc.collect()
