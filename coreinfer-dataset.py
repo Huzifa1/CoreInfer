@@ -108,23 +108,45 @@ def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_t
 
 
 
-def main(method, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, prompt, memory_limit, num_fewshot, task_type, num_tokens_to_generate, device, sampling_method, cluster_path = None, cpu_only = False, top_p = None):
+def main(method, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, max_items, memory_limit, num_fewshot, task_type, num_tokens_to_generate, device, dataset_name, sampling_method, cluster_path = None, cpu_only = False, top_p = None):
     model, tokenizer, num_layers = load_model(model_name, start_num, end_num, checkpoint_path, device, memory_limit)
 
     model = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path, cpu_only)
 
     print(f"Command: {' '.join(sys.argv)}\n\n")
-    dataset = load_from_disk("/local/huzaifa/CoreInfer/dataset/truthful_qa")
-    for i in tqdm(range(0, len(dataset)), desc="Generating Output"):
-        question = dataset["validation"][i]["question"]
-        best_answer = dataset["validation"][i]["best_answer"]
+    dataset = load_from_disk(f"./dataset/{dataset_name}")
+    if max_items is None:
+        max_items = len(dataset)
+    for i in tqdm(range(0, max_items), desc="Generating Output"):
+        if dataset_name == "wmt16-de-en":
+            german_phrase = dataset["validation"][i]["translation"]["de"]
+            english_phrase = dataset["validation"][i]["translation"]["en"]
 
-        print("German Phrase: ", question)
-        print("English Phrase: ", best_answer)
-        print("Model Response: ", end="")
-        generate(method, model, tokenizer, question, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p)
-        print("\n\n")
+            print("German Phrase: ", german_phrase)
+            print("English Phrase: ", english_phrase)
+            print("Model Response: ", end="")
+            generate(method, model, tokenizer, german_phrase, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p)
+            print("\n\n")
 
+        elif dataset_name == "truthful_qa":
+            question = dataset["validation"][i]["question"]
+            best_answer = dataset["validation"][i]["best_answer"]
+
+            print("Question: ", question)
+            print("Best Answer: ", best_answer)
+            print("Model Response: ", end="")
+            generate(method, model, tokenizer, question, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p)
+            print("\n\n")
+
+        elif dataset_name == "trivia_qa":
+            question = dataset["validation"][i]["question"]
+            answer = dataset["validation"][i]["answer"]["value"]
+
+            print("Question: ", question)
+            print("Answer: ", answer)
+            print("Model Response: ", end="")
+            generate(method, model, tokenizer, question, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p)
+            print("\n\n")
 
 
 
@@ -133,15 +155,16 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_name', type=str, default="opt-6.7b", help='Model Name')
-    parser.add_argument('--prompt', type=str, default="What happens to you if you eat watermelon seeds?", help='Input prompt.')
     parser.add_argument('--num_fewshot', type=int, default=6, help='Number of samples.')
     parser.add_argument('--num_tokens_to_generate', type=int, default=256, help='Maximum number of new tokens.')
     parser.add_argument('--task_type', type=str, choices=['QA', 'Summarize', 'translate_de_en'], default='QA', help='Type of task to perform.')
     parser.add_argument('--checkpoint_path', type=Path, default=Path("checkpoints/meta-Transformer/Transformer-2-7b-chat-hf/model.pth"), help='Model checkpoint path.')
     parser.add_argument('--device', type=str, default=default_device, help='Device to use')
+    parser.add_argument('--dataset_name', type=str, default="truthful_qa", choices=['truthful_qa', 'trivia_qa', 'wmt16-de-en'], help='Name of the dataset to use.')
     parser.add_argument('--sparsity', type=float, default=0.4, help='Sentence Sparsity level.')
     parser.add_argument('--start_num', type=int, default=5, help='Start layer.')
     parser.add_argument('--end_num', type=int, default=27, help='End layer.')
+    parser.add_argument('--max_items', type=int, default=None, help='Maxixmum number of items in the dataset to run.')
     parser.add_argument('--top_p', type=float, default=0.9, help='When set, will use top-p sampling')
     parser.add_argument('--sampling-method', type=str, default="greedy", choices=["greedy", "top-p"], help='Choose sampling method')
     parser.add_argument('--token_sparsity', type=float, default=0.2, help='Token Sparsity level.')
@@ -159,5 +182,5 @@ if __name__ == '__main__':
     if args.cpu_only and args.memory_limit:
         parser.error("The options --cpu_only and --memory_limit cannot be used together.")
 
-    main(args.method, args.model_name, args.checkpoint_path, args.sparsity, args.start_num, args.end_num, args.token_sparsity, args.prompt, args.memory_limit,
-        args.num_fewshot, args.task_type, args.num_tokens_to_generate, args.device, args.sampling_method, args.cluster_path, args.cpu_only, args.top_p)
+    main(args.method, args.model_name, args.checkpoint_path, args.sparsity, args.start_num, args.end_num, args.token_sparsity, args.max_items, args.memory_limit,
+        args.num_fewshot, args.task_type, args.num_tokens_to_generate, args.device, args.dataset_name, args.sampling_method, args.cluster_path, args.cpu_only, args.top_p)
