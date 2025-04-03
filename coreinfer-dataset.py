@@ -51,7 +51,7 @@ def top_p_sampling(next_token_logits, tokenizer, top_p, generated):
 # Test Model
 def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p):
     model.eval()
-    if method == 'stable_guided':
+    if method in ['stable_guided', 'static_cut', 'dynamic_cut', 'dense']:
         prompt = process_prompt_stable(ori_prompt, task_type, num_fewshot)
     elif method == 'similarity_guided':
         prompt = process_prompt_similarity(ori_prompt, task_type)
@@ -73,6 +73,7 @@ def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_t
     
     # print(ori_prompt) 
     start_time = time.time()
+    generated_text = ""
     
     for _ in range(num_tokens_to_generate):
         with torch.no_grad():
@@ -88,6 +89,7 @@ def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_t
             generated, next_token_id, next_token_text = top_p_sampling(next_token_logits, tokenizer, top_p, generated)
         
         print(next_token_text, end='', flush=True)
+        generated_text += next_token_text
     
         if next_token_id.item() == eos_token_id:
             break
@@ -103,17 +105,21 @@ def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_t
     
     # print(f'\n\nGenerated {num_generated_tokens} tokens in {elapsed_time:.2f} seconds.')
     # print(f'Decoding speed: {tokens_per_second:.2f} tokens/second')
+    
+    return generated_text
 
 
 
 
 
-def main(method, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, max_items, memory_limit, num_fewshot, task_type, num_tokens_to_generate, device, dataset_name, sampling_method, cluster_path = None, cpu_only = False, top_p = None):
+def main(filename, method, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, max_items, memory_limit, num_fewshot, task_type, num_tokens_to_generate, device, dataset_name, sampling_method, cluster_path = None, cpu_only = False, top_p = None):
     model, tokenizer, num_layers = load_model(model_name, start_num, end_num, checkpoint_path, device, memory_limit)
 
     model = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path, cpu_only)
 
-    print(f"Command: {' '.join(sys.argv)}\n\n")
+    output_file = open(filename, "a")
+    output_str = ""
+    output_str += f"Command: {' '.join(sys.argv)}\n\n"
     dataset = load_from_disk(f"./dataset/{dataset_name}")
     if max_items is None:
         max_items = len(dataset)
@@ -122,31 +128,38 @@ def main(method, model_name, checkpoint_path, sparsity, start_num, end_num, toke
             german_phrase = dataset["validation"][i]["translation"]["de"]
             english_phrase = dataset["validation"][i]["translation"]["en"]
 
-            print("German Phrase: ", german_phrase)
-            print("English Phrase: ", english_phrase)
-            print("Model Response: ", end="")
-            generate(method, model, tokenizer, german_phrase, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p)
-            print("\n\n")
+            output_str += "German Phrase: {}\n".format(german_phrase)
+            output_str += "English Phrase: {}\n".format(english_phrase)
+            generated_text = generate(method, model, tokenizer, german_phrase, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p)
+            output_str += "Model Response: {}\n".format(generated_text)
+            output_str += "\n\n"
 
         elif dataset_name == "truthful_qa":
             question = dataset["validation"][i]["question"]
             best_answer = dataset["validation"][i]["best_answer"]
 
-            print("Question: ", question)
-            print("Best Answer: ", best_answer)
-            print("Model Response: ", end="")
-            generate(method, model, tokenizer, question, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p)
-            print("\n\n")
+            output_str += "Question: {}\n".format(question)
+            output_str += "Best Answer: {}\n".format(best_answer)
+            generated_text = generate(method, model, tokenizer, question, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p)
+            output_str += "Model Response: {}\n".format(generated_text)
+            output_str += "\n\n"
 
         elif dataset_name == "trivia_qa":
             question = dataset["validation"][i]["question"]
             answer = dataset["validation"][i]["answer"]["value"]
 
-            print("Question: ", question)
-            print("Answer: ", answer)
-            print("Model Response: ", end="")
-            generate(method, model, tokenizer, question, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p)
-            print("\n\n")
+            output_str += "Question: {}\n".format(question)
+            output_str += "Answer: {}\n".format(answer)
+            generated_text = generate(method, model, tokenizer, question, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p)
+            output_str += "Model Response: {}\n".format(generated_text)
+            output_str += "\n\n"
+        
+        output_file.write(output_str)
+        output_file.flush()
+        output_str = ""
+    
+    output_file.close()
+        
 
 
 
@@ -169,9 +182,10 @@ if __name__ == '__main__':
     parser.add_argument('--sampling-method', type=str, default="greedy", choices=["greedy", "top-p"], help='Choose sampling method')
     parser.add_argument('--token_sparsity', type=float, default=0.2, help='Token Sparsity level.')
     parser.add_argument('--memory_limit', action='store_true', help='Enable memory limit.')
-    parser.add_argument('--method', type=str, choices=['stable_guided', 'similarity_guided'], default='stable_guided', help='Method to use (default: stable_guided).')
+    parser.add_argument('--method', type=str, choices=['stable_guided', 'similarity_guided', 'dynamic_cut', 'dense', 'static_cut'], default='stable_guided', help='Method to use (default: stable_guided).')
     parser.add_argument('--cluster_path', type=str, default=None, help='Optional cluster path.')
     parser.add_argument('--cpu_only', action='store_true', help='Run inference on CPU only.')
+    parser.add_argument('--filename', type=str, default=None, help='filename to save output')
 
     args = parser.parse_args()
 
@@ -182,5 +196,9 @@ if __name__ == '__main__':
     if args.cpu_only and args.memory_limit:
         parser.error("The options --cpu_only and --memory_limit cannot be used together.")
 
-    main(args.method, args.model_name, args.checkpoint_path, args.sparsity, args.start_num, args.end_num, args.token_sparsity, args.max_items, args.memory_limit,
+    if (args.filename == None):
+        timestr = time.strftime("%Y_%m_%d_%H_%M")
+        args.filename = "dataset/dataset_run_{}_{}_".format(args.dataset_name, args.method) + timestr + ".txt"
+    
+    main(args.filename, args.method, args.model_name, args.checkpoint_path, args.sparsity, args.start_num, args.end_num, args.token_sparsity, args.max_items, args.memory_limit,
         args.num_fewshot, args.task_type, args.num_tokens_to_generate, args.device, args.dataset_name, args.sampling_method, args.cluster_path, args.cpu_only, args.top_p)

@@ -1,3 +1,26 @@
+# PG SIoT
+
+## Run with dataset
+To run the code with a dataset, use the following command:\
+``
+python coreinfer-dataset.py --model_name 'llama3-8b' --num_tokens_to_generate 256 --task_type 'QA' --checkpoint_path './models/llama3-8b' --cpu_only --method 'dynamic_cut' --max_items 10
+``
+
+## Avaliable methods
+The following methods are avaiable:
+- ``stable_guided`` by CoreInfer
+- ``similarity_guided`` by CoreInfer
+- ``dense``\
+Use all weights, do dense Inference
+- ``static_cut``\
+only use the most relevant neurons
+- ``dynamic_cut``\
+only use the most relevant neurons, but with a dynamic portion for each layer
+
+
+---
+---
+
 # CoreInfer: Accelerating Large Language Model Inference with Semantics-Inspired Adaptive Sparse Activation
 
 ## TL;DR

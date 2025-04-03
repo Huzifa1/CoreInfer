@@ -3,8 +3,8 @@ import torch
 
 
 def get_neuron_scores(x: torch.Tensor):
-    sum_weight = 0.8
-    count_weight = 0.4
+    sum_weight = 0.5
+    count_weight = 0.5
     
     return get_neuron_score_with_value_and_frequency(x, sum_weight, count_weight)
 
@@ -44,7 +44,7 @@ def get_relevant_neuron_indices_static(neuron_scores: torch.Tensor):
     return sorted_indices[:limit_index]
 
 def get_relevant_neuron_indices_dynamic(neuron_scores: torch.Tensor):
-    cut_off_ratio_to_mean_score = 0.9
+    cut_off_ratio_to_mean_score = 0.8
     return get_relevant_neuron_indices_by_mean(neuron_scores, cut_off_ratio_to_mean_score)
 
 
