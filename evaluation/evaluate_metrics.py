@@ -3,6 +3,7 @@ import statistics
 from datasets import load_from_disk
 import json
 import nltk
+from pathlib import Path
 from nltk.translate.bleu_score import corpus_bleu
 
 # Second Method
@@ -69,57 +70,69 @@ def contains(pred, answers):
     pred = pred.strip().lower()
     return any(ans.strip().lower() in pred for ans in answers)
 
-dataset_name = "wmt16-de-en"
 
-files_path = f"../results/{dataset_name}/reference"
-file_name = "opt_zero_shot"
-input_path = f"{files_path}/{file_name}.txt"
-output_path = f"{files_path}/{file_name}.json"
+def main(dataset_name, input_path, output_path):
 
-predictions = []
-# If a response has multiple lines because of hullicinations, take only first line.
-# Remove the "." at the end of the response
-with open(input_path, "r") as f:
-    while line := f.readline():
-        line = line.strip()
-        if line.startswith("Model Response:"):
-            model_response = line.split("Model Response:")[1].strip()
-            predictions.append(model_response.split(".")[0])
+    predictions = []
+    # If a response has multiple lines because of hullicinations, take only first line.
+    # Remove the "." at the end of the response
+    with open(input_path, "r") as f:
+        while line := f.readline():
+            line = line.strip()
+            if line.startswith("Model Response:"):
+                model_response = line.split("Model Response:")[1].strip()
+                predictions.append(model_response.split(".")[0])
 
 
-dataset = load_from_disk(f"../dataset/{dataset_name}")
+    dataset = load_from_disk(f"../dataset/{dataset_name}")
 
-if (dataset_name == "truthful_qa"):
-    references = dataset["validation"]["correct_answers"][:len(predictions)]
-    # Remove empty references
-    filtered_references = [[item for item in row if item != ""] for row in references]
+    if (dataset_name == "truthful_qa"):
+        references = dataset["validation"]["correct_answers"][:len(predictions)]
+        # Remove empty references
+        filtered_references = [[item for item in row if item != ""] for row in references]
 
-    result = calculate_metrics(predictions, filtered_references)
+        result = calculate_metrics(predictions, filtered_references)
 
-    with open(output_path, "w") as f:
-        json.dump(result, f)
+        with open(output_path, "w") as f:
+            json.dump(result, f)
 
-elif (dataset_name == "trivia_qa"):
-    correct = 0
-    total = len(predictions)
-    for i in range(0, total):
-        predicted_answer = predictions[i]
-        ground_truths = dataset["validation"][i]["answer"]["normalized_aliases"]
-        if contains(predicted_answer, ground_truths):
-            correct += 1
+    elif (dataset_name == "trivia_qa"):
+        correct = 0
+        total = len(predictions)
+        for i in range(0, total):
+            predicted_answer = predictions[i]
+            ground_truths = dataset["validation"][i]["answer"]["normalized_aliases"]
+            if contains(predicted_answer, ground_truths):
+                correct += 1
 
-    contains_score = correct / total
-    json_dict = {
-        "contains": contains_score
-    }
+        contains_score = correct / total
+        json_dict = {
+            "contains": contains_score
+        }
 
-    with open(output_path, "w") as f:
-        json.dump(json_dict, f)
-    print(f"Contains Score: {contains_score:.4f}")
+        with open(output_path, "w") as f:
+            json.dump(json_dict, f)
+        print(f"Contains Score: {contains_score:.4f}")
 
-elif (dataset_name == "wmt16-de-en"):
-    references = [[x["en"]] for x in dataset["validation"]["translation"][:len(predictions)]]
-    result = calculate_metrics(predictions, references)
+    elif (dataset_name == "wmt16-de-en"):
+        references = [[x["en"]] for x in dataset["validation"]["translation"][:len(predictions)]]
+        result = calculate_metrics(predictions, references)
 
-    with open(output_path, "w") as f:
-        json.dump(result, f)
+        with open(output_path, "w") as f:
+            json.dump(result, f)
+
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    
+    parser.add_argument('--dataset_name', type=str, default="truthful_qa", choices=['truthful_qa', 'trivia_qa', 'wmt16-de-en'], help='Name of the dataset to use.')
+    parser.add_argument('--input_path', type=Path, default=None, help='Path to input file.', required=True)
+    parser.add_argument('--output_path', type=Path, default=None, help='Path to output json file.')
+
+    args = parser.parse_args()
+
+    if (args.output_path is None):
+        args.output_path = args.input_path.parent / f"{args.input_path.stem}.json"
+
+    main(args.dataset_name, args.input_path, args.output_path)
