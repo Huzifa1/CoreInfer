@@ -1,6 +1,5 @@
 import torch.nn as nn
 import gc
-from scipy.stats import norm
 import torch
 from tqdm import tqdm
 import common

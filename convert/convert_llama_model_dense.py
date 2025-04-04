@@ -1,6 +1,5 @@
 # Convert Llama2 Model
 import torch.nn as nn
-from scipy.stats import norm
 import gc
 import torch
 from tqdm import tqdm
