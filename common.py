@@ -127,6 +127,27 @@ def get_core_neurons(x, token_sparsity, sparsity, neuron_num = None):
 
     return indices_all
 
+def get_core_neurons_improved(x, token_sparsity, sparsity, neuron_num):
+    remained_neurons = int(neuron_num * sparsity)
+    
+    tokens_core_neurons = []
+    for token_activation in x:
+        _, sorted_indices = torch.sort(token_activation, descending=True)
+        limit = int(token_sparsity * (token_activation > 0).sum().item())
+        core_neurons = sorted_indices[:limit]
+        tokens_core_neurons.append(core_neurons)
+        
+    data_flattened = [item for sublist in tokens_core_neurons for item in sublist]
+    data_flattened = torch.tensor(data_flattened)
+    unique_numbers, counts = data_flattened.unique(return_counts=True, sorted=True)
+
+    
+    
+    sorted_indices = torch.argsort(counts, descending=True)
+    sorted_indices_clu = unique_numbers[sorted_indices]
+    indices_all = sorted_indices_clu[:remained_neurons].cpu()
+
+    return indices_all
 
 
 def get_activation(name, activation_dict):
