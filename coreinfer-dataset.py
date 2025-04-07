@@ -126,7 +126,7 @@ def main(output_path, method, model_name, checkpoint_path, sparsity, start_num, 
     output_str += f"Command: {' '.join(sys.argv)}\n\n"
     dataset = load_from_disk(f"./dataset/{dataset_name}")
     if max_items is None:
-        max_items = len(dataset)
+        max_items = len(dataset["validation"])
     for i in tqdm(range(0, max_items), desc="Generating Output"):
         if dataset_name == "wmt16-de-en":
             german_phrase = dataset["validation"][i]["translation"]["de"]
