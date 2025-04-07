@@ -129,9 +129,9 @@ def process_data(dataset, dataset_name):
         process_data = ['Question: ' + a + 'Answer: ' + b for a, b in zip(question, answer)]
         
     elif dataset_name == "wmt16-de-en":
-        de = dataset['validation']['de']
-        en = dataset['validation']['en']
-        process_data = ['German phrase: ' + a + "\nEnglish phrase:" + b for a, b in zip(de, en)]
+        de = [x["de"] for x in dataset["validation"]["translation"]]
+        en = [x["en"] for x in dataset["validation"]["translation"]]
+        process_data = ['German phrase: ' + a + "\nEnglish phrase: " + b for a, b in zip(de, en)]
 
     return process_data
     
