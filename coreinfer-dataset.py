@@ -7,7 +7,7 @@ from common import *
 from torch.nn.functional import softmax
 from datasets import load_from_disk
 
-from evaluation.evaluate_metrics_file import evaluate_inference
+from evaluation.evaluate_metrics_file import evaluate_inference, evaluate_inference_updated
 
 default_device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -174,7 +174,7 @@ def main(output_path, method, model_name, checkpoint_path, sparsity, start_num, 
     output_file.close()
     
     if not no_evaluate:
-        evaluate_inference(output_path)
+        evaluate_inference_updated(output_path)
         
         
 
@@ -216,7 +216,7 @@ if __name__ == '__main__':
 
     if (args.output_path == None):
         timestr = time.strftime("%Y_%m_%d_%H_%M")
-        args.output_path = "dataset/dataset_run_{}_".format(args.method) + timestr + ".txt"
+        args.output_path = f"results/dataset_run_{timestr}_{args.method}.txt"
     
     main(args.output_path, args.method, args.model_name, args.checkpoint_path, args.sparsity, args.start_num, args.end_num, args.token_sparsity, args.max_items, args.memory_limit,
         args.num_fewshot, args.task_type, args.num_tokens_to_generate, args.device, args.dataset_name, args.sampling_method, args.no_evaluate, args.cluster_path, args.cpu_only, args.top_p)

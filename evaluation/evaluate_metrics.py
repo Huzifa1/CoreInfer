@@ -71,7 +71,7 @@ def contains(pred, answers):
     return any(ans.strip().lower() in pred for ans in answers)
 
 
-def main(dataset_name, input_path, output_path):
+def main(dataset_name, input_path, output_path, from_root: bool = False):
 
     predictions = []
     # If a response has multiple lines because of hullicinations, take only first line.
@@ -84,7 +84,10 @@ def main(dataset_name, input_path, output_path):
                 predictions.append(model_response.split(".")[0])
 
 
-    dataset = load_from_disk(f"../dataset/{dataset_name}")
+    if from_root:
+        dataset = load_from_disk(f"dataset/{dataset_name}")
+    else:
+        dataset = load_from_disk(f"../dataset/{dataset_name}")
 
     if (dataset_name == "truthful_qa"):
         references = dataset["validation"]["correct_answers"][:len(predictions)]

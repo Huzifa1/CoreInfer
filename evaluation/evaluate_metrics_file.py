@@ -1,6 +1,9 @@
 from evaluate import load
 import sys
 
+from evaluation.evaluate_metrics import main as evaluation_updated
+
+
 def read_results_from_file(filename):
     with open(filename) as file:
         content = file.readlines()
@@ -75,6 +78,11 @@ def evaluate_inference(filepath):
     output_file.flush()
     output_file.close()
 
+def evaluate_inference_updated(inference_results_filepath):
+    evaluation_filename = inference_results_filepath.replace("dataset_run", "evaluation").replace(".txt", ".json")
+    dataset_name = "truthful_qa"
+    evaluation_updated(dataset_name, inference_results_filepath, evaluation_filename, from_root=True)
+
 
 if (__name__ == "__main__"):
-    evaluate_inference(sys.argv[1])
+    evaluate_inference_updated(sys.argv[1])

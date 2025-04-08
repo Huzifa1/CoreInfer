@@ -3,13 +3,13 @@ import torch
 
 
 def get_neuron_scores(x: torch.Tensor):
-    sum_weight = 0.5
-    count_weight = 0.5
+    value_weight = 0.65
+    count_weight = 0.35
     
-    return get_neuron_score_with_value_and_frequency(x, sum_weight, count_weight)
+    return get_neuron_score_with_value_and_frequency(x, value_weight, count_weight)
 
 def get_neuron_score_with_value_and_frequency(x: torch.Tensor, sum_weight: float, count_weight: float) -> torch.Tensor:
-        # Set negative values to 0
+    # Set negative values to 0
     x_relu = x * (x > 0)
     # Sum activation values of all tokens for each neuron
     x_summed = x_relu.sum(dim=0)
@@ -21,7 +21,9 @@ def get_neuron_score_with_value_and_frequency(x: torch.Tensor, sum_weight: float
     # Get the count of how many times did each neuron got activated (value > 0)
     x_activation_count = (x > 0).sum(dim=0)
     # Get highest activation sum
-    highest_count_score = torch.max(x_activation_count)
+    top_k_to_use = 50
+    highest_values, highest_indices = torch.topk(x_activation_count, top_k_to_use)
+    highest_count_score = highest_values[-1]
     # Normalize over the highest score
     activations_count_scores = x_activation_count / highest_count_score
 
@@ -42,7 +44,7 @@ def get_relevant_neuron_indices_static(neuron_scores: torch.Tensor, cut_off_rati
     return sorted_indices[:limit_index]
 
 def get_relevant_neuron_indices_dynamic(neuron_scores: torch.Tensor):
-    cut_off_ratio_to_mean_score = 0.8
+    cut_off_ratio_to_mean_score = 0.85
     return get_relevant_neuron_indices_by_mean(neuron_scores, cut_off_ratio_to_mean_score)
 
 
