@@ -44,6 +44,11 @@ def get_relevant_neuron_indices_static(neuron_scores: torch.Tensor, cut_off_rati
     limit_index = int(len(neuron_scores) * cut_off_ratio_static)
     return sorted_indices[:limit_index]
 
+def get_relevant_neuron_indices_moving(neuron_scores: torch.Tensor, activation_ratios: list[float], layer_num: int):
+    sorted_values, sorted_indices = neuron_scores.sort(descending=True)
+    limit_index = int(len(neuron_scores) * activation_ratios[layer_num])
+    return sorted_indices[:limit_index]
+
 def get_relevant_neuron_indices_dynamic(neuron_scores: torch.Tensor):
     cut_off_ratio_to_mean_score = 0.8
     cut_off_score = 0.34
@@ -138,7 +143,7 @@ def get_mean_average_activation_of_file(filepath: str, number_of_modified_layers
     overall_mean_activation_ratio = (number_of_modified_layers * overall_mean_activation_ratio_modified_layers + number_of_layers - number_of_modified_layers) / number_of_layers
     return overall_mean_activation_ratio
 
-def get_mean_acitvation_of_layermask(filepath: str):
+def get_activation_ratios_of_layermask(filepath: str):
     with open(filepath) as file:
         content = file.readlines()
     
@@ -150,5 +155,9 @@ def get_mean_acitvation_of_layermask(filepath: str):
                 activation_ratios.append(1)
             else:
                 activation_ratios.append(float(sparsity_str))
+    return activation_ratios
+
+def get_mean_acitvation_ratio_of_layermask(filepath: str):
+    activation_ratios = get_activation_ratios_of_layermask(filepath)
     mean_activation_ratio = float(torch.Tensor(activation_ratios).mean())
     return mean_activation_ratio

@@ -7,6 +7,7 @@ from convert.convert_llama_model_sim import convert_llama_model_sim
 from convert.convert_llama_model_dynamic_cut import convert_llama_model_dynamic_cut
 from convert.convert_llama_model_static_cut import convert_llama_model_static_cut
 from convert.convert_llama_model_dense import convert_llama_model_dense
+from convert.convert_llama_model_moving_cut import convert_llama_model_moving_cut
 
 from utils import *
 from sklearn.cluster import KMeans
@@ -100,6 +101,9 @@ def convert_model(method, model, model_name, num_layers, sparsity, start_num, en
             model = convert_llama_model_static_cut(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
         elif method == 'dense':
             model = convert_llama_model_dense(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
+        elif method == 'moving_cut':
+            model = convert_llama_model_moving_cut(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
+            
     
     end_time = time.time()
     elapsed_time = end_time - start_time
