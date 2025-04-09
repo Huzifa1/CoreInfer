@@ -72,6 +72,8 @@ class CustomMLPLayer(nn.Module):
             if "down" not in self.name:
                 if not self.weight_updated:
                     indices = indices_list_all[self.num - (self.start_num + 1)]
+                    number_of_neurons = self.weight.shape[0]
+                    self.activation_ratio = len(indices) / number_of_neurons
                     self.filtered_W = self.weight[indices,:].clone().to(device)
                     if self.memory_limit:
                         self.weight = self.weight.cpu()
@@ -89,8 +91,8 @@ class CustomMLPLayer(nn.Module):
 
 def convert_llama_model_dynamic_cut(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only):
     
-    start_num = 1
-    end_num = 31
+    start_num = 4
+    end_num = 29
     custom_layers = []
     
     for name, module in tqdm(model.named_modules(), desc="Convert Llama Models"):

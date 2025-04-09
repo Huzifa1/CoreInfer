@@ -3,9 +3,8 @@ import torch
 
 
 def get_neuron_scores(x: torch.Tensor):
-    value_weight = 0.65
-    count_weight = 0.35
-    
+    value_weight = 0.5
+    count_weight = 0.5
     return get_neuron_score_with_value_and_frequency(x, value_weight, count_weight)
 
 def get_neuron_score_with_value_and_frequency(x: torch.Tensor, sum_weight: float, count_weight: float) -> torch.Tensor:
@@ -14,14 +13,16 @@ def get_neuron_score_with_value_and_frequency(x: torch.Tensor, sum_weight: float
     # Sum activation values of all tokens for each neuron
     x_summed = x_relu.sum(dim=0)
     # Get highest activation sum
-    highest_sum_score = torch.max(x_summed)
+    top_k_to_use = 500
+    highest_values, highest_indices = torch.topk(x_summed, top_k_to_use)
+    highest_sum_score = highest_values[-1]
     # Normalize over the highest score
     activations_sum_scores = x_summed / highest_sum_score
 
     # Get the count of how many times did each neuron got activated (value > 0)
     x_activation_count = (x > 0).sum(dim=0)
     # Get highest activation sum
-    top_k_to_use = 50
+    top_k_to_use = 500
     highest_values, highest_indices = torch.topk(x_activation_count, top_k_to_use)
     highest_count_score = highest_values[-1]
     # Normalize over the highest score
@@ -44,9 +45,22 @@ def get_relevant_neuron_indices_static(neuron_scores: torch.Tensor, cut_off_rati
     return sorted_indices[:limit_index]
 
 def get_relevant_neuron_indices_dynamic(neuron_scores: torch.Tensor):
-    cut_off_ratio_to_mean_score = 0.85
-    return get_relevant_neuron_indices_by_mean(neuron_scores, cut_off_ratio_to_mean_score)
+    cut_off_ratio_to_mean_score = 0.8
+    cut_off_score = 0.34
+    minimum_used_ratio = 0.6
+    return get_relevant_neuron_indices_by_score(neuron_scores, cut_off_score, minimum_used_ratio)
 
+def get_relevant_neuron_indices_by_score(neuron_scores: torch.Tensor, cut_off_score: float, minimum_used_ratio: float):
+    score_sum = neuron_scores.sum()
+    minimum_used_ratio_is_reached = False
+    while not minimum_used_ratio_is_reached:
+        over_contribution_indices = [idx for idx, score in enumerate(neuron_scores) if score > cut_off_score]
+        used_ratio = len(over_contribution_indices) / len(neuron_scores)
+        minimum_used_ratio_is_reached = (used_ratio > minimum_used_ratio)
+        if not minimum_used_ratio_is_reached:
+            cut_off_score -= 0.01
+    return over_contribution_indices
+    
 
 def get_relevant_neuron_indices_by_mean(neuron_scores: torch.Tensor, cut_off_ratio_to_mean_score: float):
     mean_score = torch.Tensor(neuron_scores).mean()
@@ -108,7 +122,7 @@ def get_neurons_by_means(squeezed_x):
 
 
 
-def get_mean_average_activation_of_file(filepath):
+def get_mean_average_activation_of_file(filepath: str, number_of_modified_layers: int):
     with open(filepath) as file:
         content = file.readlines()
     
@@ -118,6 +132,9 @@ def get_mean_average_activation_of_file(filepath):
             mean_activation_ratio = float(line.replace("Mean activation ratio: ", ""))
             mean_activation_ratios.append(mean_activation_ratio)
     
-    overall_mean_activation_ratio = float(torch.Tensor(mean_activation_ratios).mean())
+    overall_mean_activation_ratio_modified_layers = float(torch.Tensor(mean_activation_ratios).mean())
+    
+    number_of_layers = 32
+    overall_mean_activation_ratio = (number_of_modified_layers * overall_mean_activation_ratio + number_of_layers - number_of_modified_layers) / number_of_layers
     return overall_mean_activation_ratio
             

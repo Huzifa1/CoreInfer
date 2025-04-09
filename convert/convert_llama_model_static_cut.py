@@ -45,8 +45,9 @@ class CustomMLPLayer(nn.Module):
                 squeezed_x = torch.Tensor(x.clone().squeeze())
                 
                 neuron_scores = get_neuron_scores(squeezed_x)
-                filepath_of_dynamic_cut = r"results/dataset_run_2025_04_08_14_09_dynamic_cut.txt"
-                cut_off_ratio_static = get_mean_average_activation_of_file(filepath_of_dynamic_cut)
+                filepath_of_dynamic_cut = r"results/dataset_run_2025_04_09_13_02_dynamic_cut.txt"
+                number_of_modified_layers = 24
+                cut_off_ratio_static = get_mean_average_activation_of_file(filepath_of_dynamic_cut, number_of_modified_layers)
                 relevant_indices = get_relevant_neuron_indices_static(neuron_scores, cut_off_ratio_static)
                 
                 # indices_all = common.get_core_neurons(squeezed_x, token_sparsity, sparsity, self.weight.size(1))

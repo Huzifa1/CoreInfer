@@ -53,9 +53,9 @@ def top_p_sampling(next_token_logits, tokenizer, top_p, generated):
 # Test Model
 def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p):
     model.eval()
-    if method in ['stable_guided', 'static_cut', 'dynamic_cut', 'dense']:
+    if method in ['stable_guided']:
         prompt = process_prompt_stable(ori_prompt, task_type, num_fewshot)
-    elif method == 'similarity_guided':
+    elif method in ['similarity_guided', 'static_cut', 'dynamic_cut', 'dense']:
         prompt = process_prompt_similarity(ori_prompt, task_type)
     input_ids = tokenizer.encode(prompt, return_tensors='pt').to(device)
 
@@ -152,6 +152,8 @@ def main(output_path, method, model_name, checkpoint_path, sparsity, start_num, 
                 for layer in model.custom_layers:
                     if (layer.activation_ratio > 0):
                         activation_ratios.append(layer.activation_ratio)
+                    else:
+                        activation_ratios.append(1)
                 mean_activation_ratio = torch.Tensor(activation_ratios).mean()
                 output_str += "Mean activation ratio: {}\n".format(mean_activation_ratio)
             
