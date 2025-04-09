@@ -135,6 +135,20 @@ def get_mean_average_activation_of_file(filepath: str, number_of_modified_layers
     overall_mean_activation_ratio_modified_layers = float(torch.Tensor(mean_activation_ratios).mean())
     
     number_of_layers = 32
-    overall_mean_activation_ratio = (number_of_modified_layers * overall_mean_activation_ratio + number_of_layers - number_of_modified_layers) / number_of_layers
+    overall_mean_activation_ratio = (number_of_modified_layers * overall_mean_activation_ratio_modified_layers + number_of_layers - number_of_modified_layers) / number_of_layers
     return overall_mean_activation_ratio
-            
+
+def get_mean_acitvation_of_layermask(filepath: str):
+    with open(filepath) as file:
+        content = file.readlines()
+    
+    activation_ratios = list()
+    for line in content:
+        if ("sparsity " in line):
+            sparsity_str = line.split("sparsity ")[-1].replace("\n", "")
+            if ("nan" in sparsity_str):
+                activation_ratios.append(1)
+            else:
+                activation_ratios.append(float(sparsity_str))
+    mean_activation_ratio = float(torch.Tensor(activation_ratios).mean())
+    return mean_activation_ratio

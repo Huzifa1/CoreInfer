@@ -102,13 +102,13 @@ def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_t
     print(f'\n\nGenerated {num_generated_tokens} tokens in {elapsed_time:.2f} seconds.')
     print(f'Decoding speed: {tokens_per_second:.2f} tokens/second')
     
-    if (method == 'dynamic_cut'):
-        activation_ratios = []
-        for layer in model.custom_layers:
-            if (layer.activation_ratio > 0):
-                activation_ratios.append(layer.activation_ratio)
-        mean_activation_ratio = torch.Tensor(activation_ratios).mean()
-        print("\nMean activation ratio: {}".format(mean_activation_ratio))
+    # if (method == 'dynamic_cut'):
+    #     activation_ratios = []
+    #     for layer in model.custom_layers:
+    #         if (layer.activation_ratio > 0):
+    #             activation_ratios.append(layer.activation_ratio)
+    #     mean_activation_ratio = torch.Tensor(activation_ratios).mean()
+    #     print("\nMean activation ratio: {}".format(mean_activation_ratio))
 
 
 

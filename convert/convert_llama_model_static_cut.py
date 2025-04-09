@@ -3,7 +3,7 @@ import gc
 import torch
 from tqdm import tqdm
 import common
-from convert.relevant_neurons import get_neuron_scores, get_relevant_neuron_indices_static, get_mean_average_activation_of_file
+from convert.relevant_neurons import get_neuron_scores, get_relevant_neuron_indices_static, get_mean_average_activation_of_file, get_mean_acitvation_of_layermask
 
 global_cluster = None
 
@@ -31,6 +31,8 @@ class CustomMLPLayer(nn.Module):
         self.start_num = start_num
         self.neuron_num = neuron_num
         self.memory_limit = memory_limit
+        
+        self.activation_ratio = 0.0
 
 
     def forward(self, x):
@@ -45,13 +47,20 @@ class CustomMLPLayer(nn.Module):
                 squeezed_x = torch.Tensor(x.clone().squeeze())
                 
                 neuron_scores = get_neuron_scores(squeezed_x)
-                filepath_of_dynamic_cut = r"results/dataset_run_2025_04_09_13_02_dynamic_cut.txt"
-                number_of_modified_layers = 24
-                cut_off_ratio_static = get_mean_average_activation_of_file(filepath_of_dynamic_cut, number_of_modified_layers)
+                # filepath_of_dynamic_cut = r"results/25-04-09/compare_static_dynamic/dataset_run_2025_04_09_13_02_dynamic_cut.txt"
+                # number_of_modified_layers = 24
+                # cut_off_ratio_static = get_mean_average_activation_of_file(filepath_of_dynamic_cut, number_of_modified_layers)
+                
+                filepath_of_layermask = r"results/mask_2025_04_09_14_46_dynamic_cut.layermask"
+                cut_off_ratio_static = get_mean_acitvation_of_layermask(filepath_of_layermask)
                 relevant_indices = get_relevant_neuron_indices_static(neuron_scores, cut_off_ratio_static)
                 
                 # indices_all = common.get_core_neurons(squeezed_x, token_sparsity, sparsity, self.weight.size(1))
                 indices_all = torch.Tensor(relevant_indices).int().cpu()
+                number_of_neurons = squeezed_x.shape[1]
+                self.activation_ratio = len(indices_all) / number_of_neurons
+                # print("layer {}: sparsity of {}".format(self.num, self.activation_ratio))
+                
 
                 if self.memory_limit:
                     self.weight = self.weight.cpu()
@@ -69,6 +78,8 @@ class CustomMLPLayer(nn.Module):
             if "down" not in self.name:
                 if not self.weight_updated:
                     indices = indices_list_all[self.num - (self.start_num + 1)]
+                    number_of_neurons = self.weight.shape[0]
+                    self.activation_ratio = len(indices) / number_of_neurons
                     self.filtered_W = self.weight[indices,:].clone().to(device)
                     if self.memory_limit:
                         self.weight = self.weight.cpu()
@@ -82,8 +93,10 @@ class CustomMLPLayer(nn.Module):
 
 def convert_llama_model_static_cut(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only):
     
-    start_num = 1
-    end_num = 30
+    start_num = 0
+    end_num = 31
+    custom_layers = []
+    
     
     for name, module in tqdm(model.named_modules(), desc="Convert Llama Models"):
         if "down" in name or "up" in name or "gate" in name:
@@ -95,11 +108,14 @@ def convert_llama_model_static_cut(model, sparsity, start_num, end_num, token_sp
                     parent = dict(model.named_modules())[parent_name]
                 else:
                     parent = model # for lm_head
+                    
 
                 NewLayer = CustomMLPLayer(module.weight, num, sparsity, start_num, token_sparsity, memory_limit, cpu_only, name)
                 setattr(parent, attr_name, NewLayer)
                 del module
+                custom_layers.append(NewLayer)
 
     gc.collect()
+    model.custom_layers = custom_layers
     
     return model

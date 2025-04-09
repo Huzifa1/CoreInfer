@@ -123,8 +123,12 @@ def main(output_path, method, model_name, checkpoint_path, sparsity, start_num, 
 
     output_file = open(output_path, "a")
     output_str = ""
-    output_str += f"Command: {' '.join(sys.argv)}\n\n"
+    command_str = f"Command: {' '.join(sys.argv)}\n\n"
+    output_str += command_str
     dataset = load_from_disk(f"./dataset/{dataset_name}")
+    
+    sparsity_per_layer = [list() for element in range(0, num_layers)]
+    
     if max_items is None:
         max_items = len(dataset["validation"])
     for i in tqdm(range(0, max_items), desc="Generating Output"):
@@ -136,7 +140,6 @@ def main(output_path, method, model_name, checkpoint_path, sparsity, start_num, 
             output_str += "English Phrase: {}\n".format(english_phrase)
             generated_text = generate(method, model, tokenizer, german_phrase, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p)
             output_str += "Model Response: {}\n".format(generated_text)
-            output_str += "\n\n"
 
         elif dataset_name == "truthful_qa":
             question = dataset["validation"][i]["question"]
@@ -146,18 +149,6 @@ def main(output_path, method, model_name, checkpoint_path, sparsity, start_num, 
             output_str += "Best Answer: {}\n".format(best_answer)
             generated_text = generate(method, model, tokenizer, question, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p)
             output_str += "Model Response: {}\n".format(generated_text)
-            
-            if (method == 'dynamic_cut'):
-                activation_ratios = []
-                for layer in model.custom_layers:
-                    if (layer.activation_ratio > 0):
-                        activation_ratios.append(layer.activation_ratio)
-                    else:
-                        activation_ratios.append(1)
-                mean_activation_ratio = torch.Tensor(activation_ratios).mean()
-                output_str += "Mean activation ratio: {}\n".format(mean_activation_ratio)
-            
-            output_str += "\n\n"
 
         elif dataset_name == "trivia_qa":
             question = dataset["validation"][i]["question"]
@@ -167,13 +158,39 @@ def main(output_path, method, model_name, checkpoint_path, sparsity, start_num, 
             output_str += "Answer: {}\n".format(answer)
             generated_text = generate(method, model, tokenizer, question, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p)
             output_str += "Model Response: {}\n".format(generated_text)
-            output_str += "\n\n"
+        
+        if (method in ['dynamic_cut', 'static_cut']):
+            activation_ratios = []
+            for layer in model.custom_layers:
+                if ("down" in layer.name):
+                    sparsity_per_layer[layer.num].append(layer.activation_ratio)
+                
+                if (layer.activation_ratio > 0):
+                    activation_ratios.append(layer.activation_ratio)
+                else:
+                    activation_ratios.append(1)
+            mean_activation_ratio = torch.Tensor(activation_ratios).mean()
+            output_str += "Mean activation ratio: {}\n".format(mean_activation_ratio)
+        
+        output_str += "\n\n"
         
         output_file.write(output_str)
         output_file.flush()
         output_str = ""
     
     output_file.close()
+    
+    if (method == 'dynamic_cut'):
+        mask_path = str(output_path).replace("dataset_run", "mask").replace(".txt", ".layermask")
+        mask_file = open(mask_path, "a")
+        mask_str = command_str
+        for idx, sparity_layer in enumerate(sparsity_per_layer):
+            mean_sparsity_of_layer = torch.Tensor(sparity_layer).mean()
+            mask_str += f"Layer {idx}: sparsity {mean_sparsity_of_layer}\n"
+        
+        mask_file.write(mask_str)
+        mask_file.close()
+        
     
     if not no_evaluate:
         evaluate_inference_updated(output_path)
