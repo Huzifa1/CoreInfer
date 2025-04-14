@@ -193,7 +193,7 @@ def main(output_path, method, model_name, checkpoint_path, sparsity, start_num, 
         
     
     if not no_evaluate:
-        evaluate_inference_updated(output_path)
+        evaluate_inference_updated(output_path, dataset_name)
         
         
 
