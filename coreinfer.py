@@ -49,7 +49,7 @@ def top_p_sampling(next_token_logits, tokenizer, top_p, generated):
 # Test Model
 def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p):
     model.eval()
-    if method in ['stable_guided', 'static_cut', 'dynamic_cut', 'dense']:
+    if method in ['stable_guided', 'static_cut', 'dynamic_cut', 'dense', 'dynamic_cut_ci']:
         prompt = process_prompt_stable(ori_prompt, task_type, num_fewshot)
     elif method == 'similarity_guided':
         prompt = process_prompt_similarity(ori_prompt, task_type)

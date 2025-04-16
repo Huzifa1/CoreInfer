@@ -51,8 +51,11 @@ class CustomMLPLayer(nn.Module):
                 # number_of_modified_layers = 24
                 # cut_off_ratio_static = get_mean_average_activation_of_file(filepath_of_dynamic_cut, number_of_modified_layers)
                 
-                filepath_of_layermask = r"results/mask_2025_04_09_14_46_dynamic_cut.layermask"
+                filepath_of_layermask = r"results/mask_2025_04_10_14_27_dynamic_cut.layermask"
                 cut_off_ratio_static = get_mean_acitvation_ratio_of_layermask(filepath_of_layermask)
+                
+                number_unchanged_layers = 8
+                cut_off_ratio_static = ((cut_off_ratio_static * 32) - number_unchanged_layers) / (32 - number_unchanged_layers)
                 relevant_indices = get_relevant_neuron_indices_static(neuron_scores, cut_off_ratio_static)
                 
                 # indices_all = common.get_core_neurons(squeezed_x, token_sparsity, sparsity, self.weight.size(1))
@@ -93,8 +96,9 @@ class CustomMLPLayer(nn.Module):
 
 def convert_llama_model_static_cut(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only):
     
-    start_num = 0
-    end_num = 31
+    # CAUTION: adapt variable number_unchanged_layers above accordingly
+    start_num = 4
+    end_num = 29
     custom_layers = []
     
     

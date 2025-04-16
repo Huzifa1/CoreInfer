@@ -48,7 +48,7 @@ class CustomMLPLayer(nn.Module):
                 
                 neuron_scores = get_neuron_scores(squeezed_x)
                 
-                filepath_of_layermask = r"results/mask_2025_04_09_14_46_dynamic_cut.layermask"
+                filepath_of_layermask = r"results/mask_2025_04_10_14_27_dynamic_cut.layermask"
                 activation_ratios = get_activation_ratios_of_layermask(filepath_of_layermask)
                 relevant_indices = get_relevant_neuron_indices_moving(neuron_scores, activation_ratios, self.num)
                 

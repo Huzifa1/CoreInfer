@@ -55,7 +55,7 @@ def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_t
     model.eval()
     if method in ['stable_guided']:
         prompt = process_prompt_stable(ori_prompt, task_type, num_fewshot)
-    elif method in ['similarity_guided', 'static_cut', 'dynamic_cut', 'dense', 'moving_cut']:
+    elif method in ['similarity_guided', 'static_cut', 'dynamic_cut', 'dense', 'moving_cut', 'dynamic_cut_ci']:
         prompt = process_prompt_similarity(ori_prompt, task_type)
     input_ids = tokenizer.encode(prompt, return_tensors='pt').to(device)
 
@@ -159,7 +159,7 @@ def main(output_path, method, model_name, checkpoint_path, sparsity, start_num, 
             generated_text = generate(method, model, tokenizer, question, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p)
             output_str += "Model Response: {}\n".format(generated_text)
         
-        if (method in ['dynamic_cut', 'static_cut']):
+        try:
             activation_ratios = []
             for layer in model.custom_layers:
                 if ("down" in layer.name):
@@ -171,6 +171,8 @@ def main(output_path, method, model_name, checkpoint_path, sparsity, start_num, 
                     activation_ratios.append(1)
             mean_activation_ratio = torch.Tensor(activation_ratios).mean()
             output_str += "Mean activation ratio: {}\n".format(mean_activation_ratio)
+        except AttributeError:
+            i = 0 # do nothing
         
         output_str += "\n\n"
         
@@ -180,7 +182,7 @@ def main(output_path, method, model_name, checkpoint_path, sparsity, start_num, 
     
     output_file.close()
     
-    if (method in ['dynamic_cut']):
+    if (method in ['dynamic_cut', 'dynamic_cut_ci']):
         mask_path = str(output_path).replace("dataset_run", "mask").replace(".txt", ".layermask")
         mask_file = open(mask_path, "a")
         mask_str = command_str
@@ -218,7 +220,7 @@ if __name__ == '__main__':
     parser.add_argument('--sampling-method', type=str, default="greedy", choices=["greedy", "top-p"], help='Choose sampling method')
     parser.add_argument('--token_sparsity', type=float, default=0.2, help='Token Sparsity level.')
     parser.add_argument('--memory_limit', action='store_true', help='Enable memory limit.')
-    parser.add_argument('--method', type=str, choices=['stable_guided', 'similarity_guided', 'dynamic_cut', 'dense', 'static_cut', 'moving_cut'], default='stable_guided', help='Method to use (default: stable_guided).')
+    parser.add_argument('--method', type=str, choices=['stable_guided', 'similarity_guided', 'dynamic_cut', 'dynamic_cut_ci', 'dense', 'static_cut', 'moving_cut'], default='stable_guided', help='Method to use (default: stable_guided).')
     parser.add_argument('--cluster_path', type=str, default=None, help='Optional cluster path.')
     parser.add_argument('--cpu_only', action='store_true', help='Run inference on CPU only.')
     parser.add_argument('--output_path', type=Path, default=None, help='Path to output file.')

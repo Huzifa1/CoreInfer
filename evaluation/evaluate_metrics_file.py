@@ -78,7 +78,7 @@ def evaluate_inference(filepath):
     output_file.flush()
     output_file.close()
 
-def evaluate_inference_updated(inference_results_filepath, dataset_name):
+def evaluate_inference_updated(inference_results_filepath: str, dataset_name: str):
     evaluation_filename = inference_results_filepath.replace("dataset_run", "evaluation").replace(".txt", ".json")
     evaluation_updated(dataset_name, inference_results_filepath, evaluation_filename, from_root=True)
 

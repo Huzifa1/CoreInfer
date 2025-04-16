@@ -1,18 +1,19 @@
-# Convert Llama2 Model
 import torch.nn as nn
 import gc
 import torch
 from tqdm import tqdm
 import common
+from convert.relevant_neurons import get_neuron_scores, get_relevant_neuron_indices_dynamic
 
-indices_list_all = []
+global_cluster = None
 
 class CustomMLPLayer(nn.Module):
-    def __init__(self, weight, num, sparsity, start_num, token_sparsity, memory_limit, cpu_only, name):
+    def __init__(self, weight, num, sparsity, start_num, token_sparsity, memory_limit, cpu_only, name, model_modules):
         super(CustomMLPLayer, self).__init__()
         
         device = torch.device("cpu") if memory_limit or cpu_only else torch.device("cuda")
         
+        sparsity = 1
         if "down" in name:
             neuron_num = int(weight.size(1) * sparsity)
             self.filtered_W = torch.zeros((weight.size(0),neuron_num)).to(torch.float16).to(device)
@@ -32,7 +33,6 @@ class CustomMLPLayer(nn.Module):
         self.memory_limit = memory_limit
         
         self.activation_ratio = 0.0
-        
 
 
     def forward(self, x):
@@ -44,12 +44,18 @@ class CustomMLPLayer(nn.Module):
             true_value = x @ self.weight.T.to(device)
 
             if "down" in self.name:
-                squeezed_x = x.clone().squeeze()
-                indices_all = common.get_core_neurons(squeezed_x, self.token_sparsity, self.sparsity, self.weight.size(1))
-
-                number_of_neurons = squeezed_x.shape[1]
-                self.activation_ratio = len(indices_all) / number_of_neurons
+                squeezed_x = torch.Tensor(x.clone().squeeze())
                 
+                # indices = self.get_most_relevant_neurons_by_with_value(squeezed_x)
+                neuron_scores = get_neuron_scores(squeezed_x)
+                indices = get_relevant_neuron_indices_dynamic(neuron_scores)
+                
+                number_of_neurons = squeezed_x.shape[1]
+                self.activation_ratio = len(indices) / number_of_neurons
+                print("layer {}: sparsity of {}".format(self.num, self.activation_ratio))
+                
+                indices_all = common.get_core_neurons(squeezed_x, self.token_sparsity, self.activation_ratio, self.weight.size(1))
+
                 if self.memory_limit:
                     self.weight = self.weight.cpu()
                     self.filtered_W = torch.zeros_like(self.weight).cuda().to(torch.float16)
@@ -76,9 +82,17 @@ class CustomMLPLayer(nn.Module):
             true_value = x @ self.filtered_W.T
             
         return true_value
+    
+
+        
+        
 
 
-def convert_llama_model(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only):
+
+def convert_llama_model_dynamic_cut_ci(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only):
+    
+    start_num = 4
+    end_num = 29
     custom_layers = []
     
     for name, module in tqdm(model.named_modules(), desc="Convert Llama Models"):
@@ -92,13 +106,12 @@ def convert_llama_model(model, sparsity, start_num, end_num, token_sparsity, mem
                 else:
                     parent = model # for lm_head
 
-                NewLayer = CustomMLPLayer(module.weight, num, sparsity, start_num, token_sparsity, memory_limit, cpu_only, name)
+                NewLayer = CustomMLPLayer(module.weight, num, sparsity, start_num, token_sparsity, memory_limit, cpu_only, name, model.named_modules())
                 setattr(parent, attr_name, NewLayer)
                 del module
                 custom_layers.append(NewLayer)
 
     gc.collect()
     model.custom_layers = custom_layers
-    
     
     return model
