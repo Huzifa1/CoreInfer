@@ -45,6 +45,7 @@ from torch.distributions import constraints
 from torch.nn import CrossEntropyLoss, Identity
 from torch.utils.checkpoint import checkpoint
 
+from .siot import NEURON_LIMIT
 from .activations import get_activation
 from .configuration_utils import PretrainedConfig
 from .dynamic_module_utils import custom_object_save
@@ -820,9 +821,12 @@ def _load_state_dict_into_meta_model(
             # SIOT: Filter param here
             if ("mlp" in param_name):
                 if ("down" in param_name):
-                    param = param[:, :7000]
+                    param_subset = param[:, :NEURON_LIMIT]
                 if ("up" in param_name or "gate" in param_name):
-                    param = param[:7000, :]
+                    param_subset = param[:NEURON_LIMIT, :]
+                param_subset = param_subset.clone()
+                del param
+                param = param_subset
 
             if device_map is None:
                 param_device = "cpu"
