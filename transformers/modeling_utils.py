@@ -827,6 +827,7 @@ def _load_state_dict_into_meta_model(
                     param_subset = param[indices, :]
                 param_subset = param_subset.clone()
                 del param
+                torch.cuda.empty_cache()
                 param = param_subset
 
             if device_map is None:
