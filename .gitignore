@@ -4,6 +4,7 @@ dataset/
 models/
 ignore/
 results/
+masks/
 
 *.pyc
 
