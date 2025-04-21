@@ -41,7 +41,7 @@ def get_layer_name(model_name, Layer_num):
         return f"model.decoder.layers.{Layer_num}.activation_fn"
     
     if "llama" in model_name:
-        return f"model.layers.{Layer_num}.mlp.act_fn"
+        return f"model.layers.{Layer_num}.mlp.down_proj"
     
     raise ValueError("Model Name not supported")
 
@@ -168,7 +168,7 @@ def register_act_hooks(model_name, model, activation_dict, Layer_num = None):
     model_instance = MODEL_INFO[model_name]['activation_fn']
     
     for name, layer in model.named_modules():
-        if isinstance(layer, model_instance):
+        if ("llama" in model_name and "down" in name) or ("opt" in model_name and isinstance(layer, model_instance)):
             if (Layer_num is None or Layer_num == get_layer_number(model_name, name)):
                 hooks.append(layer.register_forward_hook(get_activation(name, activation_dict)))
             

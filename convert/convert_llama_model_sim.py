@@ -41,10 +41,10 @@ class CustomMLPLayer(nn.Module):
             if self.memory_limit or self.cpu_only:
                 self.weight = self.weight.cpu()
 
-            if "gate" in self.name and self.num == 25:
+            if "down" in self.name and self.num == 25:
                 # Here, for some reason they pick top 3000 neurons from the sorted_indices_clu
                 # So to match the function params, set sparsity to 1 and neuron_num to 3000
-                indices_all = common.get_core_neurons(true_value.squeeze(0), 0.4, 1, 3000)
+                indices_all = common.get_core_neurons(x.clone().squeeze(0), 0.4, 1, 3000)
 
                 indices_all_2d = [indices_all.tolist()]
                 new_data = self.mlb_loaded.transform(indices_all_2d)
