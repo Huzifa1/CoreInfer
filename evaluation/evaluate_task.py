@@ -35,7 +35,7 @@ def evaluate(task_name, model, tokenizer, num_fewshot, device, limit, output_pat
 
 def main(method, task_name, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, memory_limit, device, num_fewshot, limit, output_path, cluster_path = None, cpu_only = None):
     
-    model, tokenizer, num_layers = load_model(checkpoint_path, start_num, end_num, checkpoint_path, device, memory_limit)
+    model, tokenizer, num_layers = load_model(model_name, start_num, end_num, checkpoint_path, device, memory_limit)
     
     model = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path, cpu_only)
         
