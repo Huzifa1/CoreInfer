@@ -15,8 +15,7 @@ default_device = 'cuda' if torch.cuda.is_available() else 'cpu'
 def save_cluster(model_name, SEN_F, cluster_path):
     data = SEN_F
 
-    model_family = get_model_family(model_name)
-    num_neurons = MODEL_INFO[model_family]['num_neurons']
+    num_neurons = MODEL_INFO[model_name]['num_neurons']
     mlb = MultiLabelBinarizer(classes=range(0, num_neurons))
 
     encoded_data = mlb.fit_transform(data)
@@ -59,8 +58,7 @@ def save_neurons(activations, model_name, model, cluster, cluster_path, sparsity
         os.makedirs(folder_path, exist_ok=True)
     
     value_ratio = 0.2
-    model_family = get_model_family(model_name)
-    num_neurons = MODEL_INFO[model_family]['num_neurons']
+    num_neurons = MODEL_INFO[model_name]['num_neurons']
 
     model.to(device)
     

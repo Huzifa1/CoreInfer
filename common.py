@@ -22,24 +22,19 @@ from tqdm import tqdm
 import time
 
 MODEL_INFO = {
-    'opt': {
+    'opt-1.3b': {
+        'num_neurons': 8192,
+        'activation_fn': torch.nn.ReLU,
+    },
+    'opt6.7b': {
         'num_neurons': 16384,
         'activation_fn': torch.nn.ReLU,
     },
-    'llama': {
+    'llama3-8b': {
         'num_neurons': 14336,
         'activation_fn': torch.nn.SiLU
     }
 }
-
-def get_model_family(model_name):
-    if "opt" in model_name:
-        return "opt"
-    elif "llama" in model_name:
-        return "llama"
-    else:
-        # Currently only supports Opt and LLAMA models
-        raise ValueError("Model Name not supported")
     
 def get_layer_name(model_name, Layer_num):
     if "opt" in model_name:
@@ -170,8 +165,7 @@ def get_activation(name, activation_dict):
 def register_act_hooks(model_name, model, activation_dict, Layer_num = None):
     hooks = []
 
-    model_family = get_model_family(model_name)
-    model_instance = MODEL_INFO[model_family]['activation_fn']
+    model_instance = MODEL_INFO[model_name]['activation_fn']
     
     for name, layer in model.named_modules():
         if isinstance(layer, model_instance):
