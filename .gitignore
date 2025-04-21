@@ -5,6 +5,7 @@ models/
 ignore/
 results/
 masks/
+!transformers/models/
 
 *.pyc
 
