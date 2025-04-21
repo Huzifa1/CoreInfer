@@ -20,7 +20,7 @@ import json
 import warnings
 from collections import OrderedDict
 
-from ...siot import get_used_neurons_count
+from ...siot import USE_SIOT_IMPROVEMENTS, get_used_neurons_count
 from ...configuration_utils import PretrainedConfig
 from ...dynamic_module_utils import get_class_from_dynamic_module, resolve_trust_remote_code
 from ...utils import (
@@ -547,8 +547,11 @@ class _BaseAutoModelClass:
 
         # AutoClass-specific config manipulation
         config = copy.deepcopy(config)
+        
         # SIoT
-        config.intermediate_size = get_used_neurons_count(0)
+        if USE_SIOT_IMPROVEMENTS:
+            config.intermediate_size = get_used_neurons_count(0)
+        
         config = cls._prepare_config_for_auto_class(config)
 
         has_remote_code = hasattr(config, "auto_map") and cls.__name__ in config.auto_map

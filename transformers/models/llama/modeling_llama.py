@@ -23,7 +23,7 @@ import torch
 import torch.utils.checkpoint
 from torch import nn
 
-from ...siot import get_used_neurons_count
+from ...siot import get_used_neurons_count, USE_SIOT_IMPROVEMENTS
 from ...activations import ACT2FN
 from ...cache_utils import Cache, DynamicCache, StaticCache
 from ...generation import GenerationMixin
@@ -512,13 +512,16 @@ class LlamaModel(LlamaPreTrainedModel):
         # )
         
         # SIoT
-        llama_decode_layers = []
-        for layer_idx in range(config.num_hidden_layers):
-            neuron_count = get_used_neurons_count(layer_idx)
-            config.intermediate_size = neuron_count
-            new_layer = LlamaDecoderLayer(config, layer_idx)
-            llama_decode_layers.append(new_layer)
-        self.layers = nn.ModuleList(llama_decode_layers)
+        if USE_SIOT_IMPROVEMENTS:
+            llama_decode_layers = []
+            for layer_idx in range(config.num_hidden_layers):
+                neuron_count = get_used_neurons_count(layer_idx)
+                config.intermediate_size = neuron_count
+                new_layer = LlamaDecoderLayer(config, layer_idx)
+                llama_decode_layers.append(new_layer)
+            self.layers = nn.ModuleList(llama_decode_layers)
+        else:
+            self.layers = nn.ModuleList([LlamaDecoderLayer(config, layer_idx) for layer_idx in range(config.num_hidden_layers)])
         
         self.norm = LlamaRMSNorm(config.hidden_size, eps=config.rms_norm_eps)
         self.rotary_emb = LlamaRotaryEmbedding(config=config)

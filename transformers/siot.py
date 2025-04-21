@@ -1,4 +1,4 @@
-NEURON_LIMIT = 10
+USE_SIOT_IMPROVEMENTS = False
 
 def get_used_neurons_count(layer_id: int) -> int:
     return len(get_used_neurons_with_layer_id(layer_id))
@@ -8,7 +8,7 @@ def get_used_neurons(layer_name: str) -> list[int]:
     return get_used_neurons_with_layer_id(layer_id)
     
 def get_used_neurons_with_layer_id(layer_id: int) -> list[int]:
-    mask_filepath = ("./masks/25-03-02_cooking_partly.mask")
+    mask_filepath = ("./masks/25-03-02_cooking_partly_moving_cut.mask")
     mask_file = open(mask_filepath, "r")
     mask_lines = mask_file.readlines()
     
