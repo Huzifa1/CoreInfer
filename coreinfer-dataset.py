@@ -116,10 +116,10 @@ def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_t
 
 
 
-def main(output_path, method, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, max_items, memory_limit, num_fewshot, task_type, num_tokens_to_generate, device, dataset_name, sampling_method, no_evaluate: bool, cluster_path = None, cpu_only = False, top_p = None):
+def main(output_path, method, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, max_items, memory_limit, num_fewshot, task_type, num_tokens_to_generate, device, dataset_name, sampling_method, no_evaluate: bool, cluster_path = None, cpu_only = False, top_p = None, sparsity_levels_path = None):
     model, tokenizer, num_layers = load_model(model_name, start_num, end_num, checkpoint_path, device, memory_limit)
 
-    model = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path, cpu_only)
+    model = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path, cpu_only, sparsity_levels_path)
 
     output_file = open(output_path, "a")
     output_str = ""
@@ -220,12 +220,12 @@ if __name__ == '__main__':
     parser.add_argument('--sampling-method', type=str, default="greedy", choices=["greedy", "top-p"], help='Choose sampling method')
     parser.add_argument('--token_sparsity', type=float, default=0.2, help='Token Sparsity level.')
     parser.add_argument('--memory_limit', action='store_true', help='Enable memory limit.')
-    parser.add_argument('--method', type=str, choices=['stable_guided', 'similarity_guided', 'dynamic_cut', 'dynamic_cut_ci', 'dense', 'static_cut', 'moving_cut'], default='stable_guided', help='Method to use (default: stable_guided).')
+    parser.add_argument('--method', type=str, choices=['stable_guided', 'similarity_guided', 'dynamic_cut', 'dynamic_cut_ci', 'dense', 'static_cut', 'moving_cut', 'sparsity_levels'], default='stable_guided', help='Method to use (default: stable_guided).')
     parser.add_argument('--cluster_path', type=str, default=None, help='Optional cluster path.')
     parser.add_argument('--cpu_only', action='store_true', help='Run inference on CPU only.')
     parser.add_argument('--output_path', type=Path, default=None, help='Path to output file.')
     parser.add_argument('--no_evaluate', action='store_true', help='do not do evaluation after inference')
-
+    parser.add_argument('--sparsity_levels_path', type=Path, default=None, help='Path to sparsity levels file.')
     args = parser.parse_args()
 
     if (args.cpu_only):
@@ -238,6 +238,8 @@ if __name__ == '__main__':
     if (args.output_path == None):
         timestr = time.strftime("%Y_%m_%d_%H_%M")
         args.output_path = f"results/dataset_run_{timestr}_{args.method}.txt"
+        
+    if (args.method == 'sparsity_levels' and args.sparsity_levels_path is None):
+        parser.error("The option --sparsity_levels_path is required when using the sparsity_levels method.")
     
-    main(args.output_path, args.method, args.model_name, args.checkpoint_path, args.sparsity, args.start_num, args.end_num, args.token_sparsity, args.max_items, args.memory_limit,
-        args.num_fewshot, args.task_type, args.num_tokens_to_generate, args.device, args.dataset_name, args.sampling_method, args.no_evaluate, args.cluster_path, args.cpu_only, args.top_p)
+    main(args.output_path, args.method, args.model_name, args.checkpoint_path, args.sparsity, args.start_num, args.end_num, args.token_sparsity, args.max_items, args.memory_limit, args.num_fewshot, args.task_type, args.num_tokens_to_generate, args.device, args.dataset_name, args.sampling_method, args.no_evaluate, args.cluster_path, args.cpu_only, args.top_p, args.sparsity_levels_path)
