@@ -45,7 +45,7 @@ from torch.distributions import constraints
 from torch.nn import CrossEntropyLoss, Identity
 from torch.utils.checkpoint import checkpoint
 
-from .siot import get_used_neurons
+from .siot import USE_SIOT_IMPROVEMENTS, get_used_neurons
 from .activations import get_activation
 from .configuration_utils import PretrainedConfig
 from .dynamic_module_utils import custom_object_save
@@ -819,12 +819,25 @@ def _load_state_dict_into_meta_model(
                 param = param.contiguous()
 
             # SIOT: Filter param here
-            if ("mlp" in param_name):
+            if (USE_SIOT_IMPROVEMENTS and ("mlp" in param_name or "fc" in param_name)):
                 indices = get_used_neurons(param_name)
-                if ("down" in param_name):
-                    param_subset = param[:, indices]
-                if ("up" in param_name or "gate" in param_name):
-                    param_subset = param[indices, :]
+                # LLAMA
+                if ("mlp" in param_name):
+                    if ("down" in param_name):
+                        param_subset = param[:, indices]
+                    if ("up" in param_name or "gate" in param_name):
+                        param_subset = param[indices, :]
+                # OPT
+                if ("fc" in param_name):
+                    if ("fc1" in param_name and "weight" in param_name):
+                        param_subset = param[indices, :]
+                    if ("fc1" in param_name and "bias" in param_name):
+                        param_subset = param[indices]
+                    if ("fc2" in param_name and "weight" in param_name):
+                        param_subset = param[:, indices]
+                    if ("fc2" in param_name and "bias" in param_name):
+                        param_subset = param
+                
                 param_subset = param_subset.clone()
                 del param
                 torch.cuda.empty_cache()
