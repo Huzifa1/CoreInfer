@@ -248,7 +248,7 @@ def get_sentence_core_neurons(model_name, Layer_num, activations, token_sparsity
 def get_items_core_neurons(model_name, num_layers, activations, token_sparsity, sparsity):
     num_neurons = MODEL_INFO[model_name]["num_neurons"]
     items_core_neurons = []
-    for layer in tqdm(range(num_layers), desc="Layers"):
+    for layer in range(num_layers):
         layer_act=[]
         for i in range(len(activations)):
             str_act = get_layer_name(model_name, layer)
@@ -274,6 +274,51 @@ def get_dataset_core_neurons(model_name, checkpoint_path, device, token_sparsity
     dataset_core_neurons = get_items_core_neurons(model_name, num_layers, activations, token_sparsity, sparsity)
     
     return dataset_core_neurons
+
+
+def get_neurons_scores(x, sum_weight, count_weight, top_k):
+    # Set negative values to 0
+    x_relu = x * (x > 0)
+    # Sum activation values of all tokens for each neuron
+    x_summed = x_relu.to(torch.float32).sum(dim=0)
+
+    # Get top_k_th highest activation sum
+    topk_values, _ = torch.topk(x_summed, top_k)
+    highest_sum_score = topk_values[-1]
+    # Normalize over the highest score
+    activations_sum_scores = x_summed / highest_sum_score
+
+    # Get the count of how many times did each neuron got activated (value > 0)
+    x_activation_count = (x > 0).sum(dim=0)
+    # Get highest activation sum
+    highest_count_score = torch.max(x_activation_count)
+    # Normalize over the highest score
+    activations_count_scores = x_activation_count / highest_count_score
+    # Now get total score for each neuron
+    total_scores = activations_sum_scores * sum_weight + activations_count_scores * count_weight
+    
+    return total_scores
+
+
+def get_sparsity_levels(model_name, num_layers, sum_weight, count_weight, threshold, top_k, activations):
+    sparsity_levels = []
+    num_neurons = MODEL_INFO[model_name]["num_neurons"]
+    for layer in tqdm(range(num_layers), desc="Layers"):
+        layer_act=[]
+        for i in range(len(activations)):
+            str_act = get_layer_name(model_name, layer)
+            tensor = activations[i][str_act].cpu()
+            if "llama" in model_name:
+                tensor = tensor.squeeze(0)
+            layer_act.append(tensor)
+        A_tensor = torch.cat(layer_act, dim=0)
+        
+        total_scores = get_neurons_scores(A_tensor, sum_weight, count_weight, top_k)
+
+        number_of_hot_neurons = int((total_scores > threshold).sum())
+        sparsity_levels.append(round(number_of_hot_neurons / num_neurons, 2))
+
+    return sparsity_levels
 
 
 def read_cluster_files(cluster_path, num_layers):
