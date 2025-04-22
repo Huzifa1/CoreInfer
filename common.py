@@ -245,19 +245,24 @@ def get_sentence_core_neurons(model_name, Layer_num, activations, token_sparsity
     return SEN_F
 
 
+def concat_activations_per_layer(model_name, activations, layer_num):
+    layer_act=[]
+    for i in range(len(activations)):
+        str_act = get_layer_name(model_name, layer_num)
+        tensor = activations[i][str_act].cpu()
+        if "llama" in model_name:
+            tensor = tensor.squeeze(0)
+        layer_act.append(tensor)
+    A_tensor = torch.cat(layer_act, dim=0)
+    
+    return A_tensor
+
+
 def get_items_core_neurons(model_name, num_layers, activations, token_sparsity, sparsity):
     num_neurons = MODEL_INFO[model_name]["num_neurons"]
     items_core_neurons = []
-    for layer in range(num_layers):
-        layer_act=[]
-        for i in range(len(activations)):
-            str_act = get_layer_name(model_name, layer)
-            tensor = activations[i][str_act].cpu()
-            if "llama" in model_name:
-                tensor = tensor.squeeze(0)
-            layer_act.append(tensor)
-        A_tensor = torch.cat(layer_act, dim=0)
-        
+    for layer_num in range(num_layers):
+        A_tensor = concat_activations_per_layer(model_name, activations, layer_num)
         core_neurons = get_core_neurons(A_tensor, token_sparsity, sparsity, num_neurons)
         items_core_neurons.append(core_neurons)
         
@@ -303,18 +308,9 @@ def get_neurons_scores(x, sum_weight, count_weight, top_k):
 def get_sparsity_levels(model_name, num_layers, sum_weight, count_weight, threshold, top_k, activations):
     sparsity_levels = []
     num_neurons = MODEL_INFO[model_name]["num_neurons"]
-    for layer in tqdm(range(num_layers), desc="Layers"):
-        layer_act=[]
-        for i in range(len(activations)):
-            str_act = get_layer_name(model_name, layer)
-            tensor = activations[i][str_act].cpu()
-            if "llama" in model_name:
-                tensor = tensor.squeeze(0)
-            layer_act.append(tensor)
-        A_tensor = torch.cat(layer_act, dim=0)
-        
+    for layer_num in range(num_layers):
+        A_tensor = concat_activations_per_layer(model_name, activations, layer_num)
         total_scores = get_neurons_scores(A_tensor, sum_weight, count_weight, top_k)
-
         number_of_hot_neurons = int((total_scores > threshold).sum())
         sparsity_levels.append(round(number_of_hot_neurons / num_neurons, 2))
 
