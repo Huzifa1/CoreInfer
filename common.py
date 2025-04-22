@@ -1,4 +1,5 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from datasets import load_from_disk
 from convert.convert_opt_model import convert_opt_model
 from convert.convert_opt_model_sim import convert_opt_model_sim
 from convert.convert_llama_model import convert_llama_model
@@ -26,7 +27,7 @@ MODEL_INFO = {
         'num_neurons': 8192,
         'activation_fn': torch.nn.ReLU,
     },
-    'opt6.7b': {
+    'opt-6.7b': {
         'num_neurons': 16384,
         'activation_fn': torch.nn.ReLU,
     },
@@ -243,6 +244,30 @@ def get_sentence_core_neurons(model_name, Layer_num, activations, token_sparsity
     
     return SEN_F
 
+
+def get_dataset_core_neurons(model_name, checkpoint_path, device, token_sparsity, sparsity, dataset_path, dataset_name, memory_limit = False):
+    
+    model, tokenizer, num_layers = load_model(model_name, 5, 27, checkpoint_path, device, memory_limit)
+    dataset = load_from_disk(dataset_path)
+    precessed_data = process_data(dataset, dataset_name)
+    activations = collect_activations(model_name, precessed_data, tokenizer, device, model)
+    
+    num_neurons = MODEL_INFO[model_name]["num_neurons"]
+    dataset_core_neurons = []
+    for layer in tqdm(range(num_layers), desc="Layers"):
+        layer_act=[]
+        for i in range(len(activations)):
+            str_act = get_layer_name(model_name, layer)
+            tensor = activations[i][str_act].cpu()
+            if "llama" in model_name:
+                tensor = tensor.squeeze(0)
+            layer_act.append(tensor)
+        A_tensor = torch.cat(layer_act, dim=0)
+        
+        core_neurons = get_core_neurons(A_tensor, token_sparsity, sparsity, num_neurons)
+        dataset_core_neurons.append(core_neurons)
+        
+    return dataset_core_neurons
 
 
 def read_cluster_files(cluster_path, num_layers):
