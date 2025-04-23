@@ -132,7 +132,47 @@ def process_data(dataset, dataset_name):
         de = [x["de"] for x in dataset["validation"]["translation"]]
         en = [x["en"] for x in dataset["validation"]["translation"]]
         process_data = ['German phrase: ' + a + "\nEnglish phrase: " + b for a, b in zip(de, en)]
+        
+    elif dataset_name == "squadv2":
+        filtered_dataset = dataset["validation"].filter(lambda x: len(x["answers"]["text"]) > 0)
+        question = filtered_dataset["question"]
+        answer = [x["text"][0] for x in filtered_dataset["answers"]]
+        context = filtered_dataset["context"]
+        process_data = ['Context: ' + a + '\nQuestion: ' + b + '\nAnswer: ' + c for a, b, c in zip(context, question, answer)]
+        
+    elif dataset_name == "commonsense_qa":
+        process_data = []
+        for i in range(len(dataset["validation"])):
+            item = dataset["validation"][i]
+            question = item["question"]
+            choices = item["choices"]
 
+            answer_to_index = {
+                "A": 0,
+                "B": 1,
+                "C": 2,
+                "D": 3,
+                "E": 4
+            }
+
+            choices_A = choices["text"][0]
+            choices_B = choices["text"][1]
+            choices_C = choices["text"][2]
+            choices_D = choices["text"][3]
+            choices_E = choices["text"][4]
+
+            answer = choices["text"][answer_to_index[item["answerKey"]]]
+            
+            process_data.append(f"Question: {question}\nA. {choices_A}\nB. {choices_B}\nC. {choices_C}\nD. {choices_D}\nE. {choices_E}\nAnswer: {answer}")
+            
+    elif dataset_name == "bertaqa_en":
+        question = dataset["test"]["question"]
+        candidates = dataset["test"]["candidates"]
+        answers = [candidates[i][x] for i,x in enumerate(dataset["test"]["answer"])]
+        candidates_text = [f"A: {x[0]}\nB: {x[1]}\nC: {x[2]}" for x in dataset["test"]["candidates"]]
+        process_data = ['Question: ' + a + '\n' + b + '\nAnswer: ' + c for a, b, c in zip(question, candidates_text, answers)]
+        
+            
     return process_data
     
 
