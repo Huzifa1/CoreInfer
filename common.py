@@ -58,6 +58,9 @@ def get_layer_number(model_name, layer_name):
 
 def load_model(model_name, start_num, end_num, checkpoint_path, device, memory_limit):
     start_time = time.time()
+    
+    if (device == "cuda" and torch.cuda.is_available()):
+        device = 0
 
     if memory_limit == True:
         model, num_layers = load_model_memory_limit(checkpoint_path, start_num, end_num, model_name)
