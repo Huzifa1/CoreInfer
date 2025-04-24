@@ -5,6 +5,7 @@ from convert.convert_opt_model_sim import convert_opt_model_sim
 from convert.convert_llama_model import convert_llama_model
 from convert.convert_llama_model_sim import convert_llama_model_sim
 
+from convert.convert_llama_model_score import convert_llama_model_score
 from convert.convert_llama_model_dynamic_cut import convert_llama_model_dynamic_cut
 from convert.convert_llama_model_dynamic_cut_ci import convert_llama_model_dynamic_cut_ci
 from convert.convert_llama_model_static_cut import convert_llama_model_static_cut
@@ -108,6 +109,8 @@ def convert_model(method, model, model_name, num_layers, sparsity, start_num, en
             model = convert_llama_model_dense(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
         elif method == 'moving_cut':
             model = convert_llama_model_moving_cut(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
+        elif method == 'score':
+            model = convert_llama_model_score(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
             
     
     end_time = time.time()

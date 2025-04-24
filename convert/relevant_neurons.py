@@ -13,7 +13,7 @@ def get_neuron_score_with_value_and_frequency(x: torch.Tensor, sum_weight: float
     # Sum activation values of all tokens for each neuron
     x_summed = x_relu.sum(dim=0)
     # Get highest activation sum
-    top_k_to_use = 500
+    top_k_to_use = 100
     highest_values, highest_indices = torch.topk(x_summed, top_k_to_use)
     highest_sum_score = highest_values[-1]
     # Normalize over the highest score
@@ -22,7 +22,7 @@ def get_neuron_score_with_value_and_frequency(x: torch.Tensor, sum_weight: float
     # Get the count of how many times did each neuron got activated (value > 0)
     x_activation_count = (x > 0).sum(dim=0)
     # Get highest activation sum
-    top_k_to_use = 500
+    top_k_to_use = 100
     highest_values, highest_indices = torch.topk(x_activation_count, top_k_to_use)
     highest_count_score = highest_values[-1]
     # Normalize over the highest score

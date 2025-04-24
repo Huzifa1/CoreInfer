@@ -548,9 +548,6 @@ class _BaseAutoModelClass:
         # AutoClass-specific config manipulation
         config = copy.deepcopy(config)
         
-        # SIoT
-        if USE_SIOT_IMPROVEMENTS:
-            config.intermediate_size = get_used_neurons_count(0)
         
         config = cls._prepare_config_for_auto_class(config)
 

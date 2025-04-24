@@ -8,6 +8,7 @@ from torch.nn.functional import softmax
 from datasets import load_from_disk
 
 from evaluation.evaluate_metrics_file import evaluate_inference, evaluate_inference_updated
+from scores.neuron_score_writer import write_neuron_scores
 
 default_device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -53,7 +54,7 @@ def top_p_sampling(next_token_logits, tokenizer, top_p, generated):
 # Test Model
 def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p):
     model.eval()
-    if method in ['stable_guided', 'static_cut', 'dynamic_cut', 'dense', 'moving_cut', 'dynamic_cut_ci']:
+    if method in ['stable_guided', 'static_cut', 'dynamic_cut', 'dense', 'moving_cut', 'dynamic_cut_ci', 'score']:
         prompt = process_prompt_stable(ori_prompt, task_type, num_fewshot)
     elif method in ['similarity_guided']:
         prompt = process_prompt_similarity(ori_prompt, task_type)
@@ -192,6 +193,16 @@ def main(output_path, method, model_name, checkpoint_path, sparsity, start_num, 
         
         mask_file.write(mask_str)
         mask_file.close()
+    
+    if (method == "score"):
+        num_layers = len(model.custom_layers)
+        num_neurons = model.custom_layers[0].neuron_num
+        scores = torch.zeros([num_layers, num_neurons])
+        for layer_idx, layer in enumerate(model.custom_layers):
+            for neuron_scores in layer.neuron_scores_list:
+                for neuron_idx, neuron_score in enumerate(neuron_scores):
+                    scores[layer_idx][neuron_idx] += neuron_score
+        write_neuron_scores(scores, output_path, command_str)
         
     
     if not no_evaluate:
@@ -220,7 +231,7 @@ if __name__ == '__main__':
     parser.add_argument('--sampling-method', type=str, default="greedy", choices=["greedy", "top-p"], help='Choose sampling method')
     parser.add_argument('--token_sparsity', type=float, default=0.2, help='Token Sparsity level.')
     parser.add_argument('--memory_limit', action='store_true', help='Enable memory limit.')
-    parser.add_argument('--method', type=str, choices=['stable_guided', 'similarity_guided', 'dynamic_cut', 'dynamic_cut_ci', 'dense', 'static_cut', 'moving_cut', 'sparsity_levels'], default='stable_guided', help='Method to use (default: stable_guided).')
+    parser.add_argument('--method', type=str, choices=['stable_guided', 'similarity_guided', 'dynamic_cut', 'dynamic_cut_ci', 'dense', 'static_cut', 'moving_cut', 'sparsity_levels', 'score'], default='stable_guided', help='Method to use (default: stable_guided).')
     parser.add_argument('--cluster_path', type=str, default=None, help='Optional cluster path.')
     parser.add_argument('--cpu_only', action='store_true', help='Run inference on CPU only.')
     parser.add_argument('--output_path', type=Path, default=None, help='Path to output file.')
