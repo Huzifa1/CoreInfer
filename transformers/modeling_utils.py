@@ -812,11 +812,6 @@ def _load_state_dict_into_meta_model(
                 device_mesh,
             )
         else:
-            param = param[...]
-            if casting_dtype is not None:
-                param = param.to(casting_dtype)
-            if to_contiguous:
-                param = param.contiguous()
 
             # SIOT: Filter param here
             if (USE_SIOT_IMPROVEMENTS and ("mlp" in param_name or "fc" in param_name)):
@@ -842,6 +837,12 @@ def _load_state_dict_into_meta_model(
                 del param
                 torch.cuda.empty_cache()
                 param = param_subset
+            
+            param = param[...]
+            if casting_dtype is not None:
+                param = param.to(casting_dtype)
+            if to_contiguous:
+                param = param.contiguous()
 
             if device_map is None:
                 param_device = "cpu"
