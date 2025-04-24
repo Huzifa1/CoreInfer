@@ -202,7 +202,8 @@ def main(output_path, method, model_name, checkpoint_path, sparsity, start_num, 
             for neuron_scores in layer.neuron_scores_list:
                 for neuron_idx, neuron_score in enumerate(neuron_scores):
                     scores[layer_idx][neuron_idx] += neuron_score
-        write_neuron_scores(scores, output_path, command_str)
+        n_prompts = len(model.custom_layers[0].neuron_scores_list)
+        write_neuron_scores(scores, output_path, command_str, n_prompts)
         
     
     if not no_evaluate:

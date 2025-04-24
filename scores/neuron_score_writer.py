@@ -1,9 +1,10 @@
 
 from torch import Tensor
 
-def write_neuron_scores(scores: Tensor, dataset_output_path: str, command_str: str):
+def write_neuron_scores(scores: Tensor, dataset_output_path: str, command_str: str, n_prompts: int):
     file_str = ""
     file_str += command_str
+    file_str += f"n_prompts: {n_prompts}\n"
     for layer_idx, layer_scores in enumerate(scores):
         file_str += f"{layer_idx}: "
         for neuron_score in layer_scores:
