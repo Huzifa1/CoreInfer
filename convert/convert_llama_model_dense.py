@@ -73,6 +73,8 @@ class CustomMLPLayer(nn.Module):
 
 
 def convert_llama_model_dense(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only):
+    return model
+
     start_num = 0
     end_num = 31
     

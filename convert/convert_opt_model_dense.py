@@ -86,6 +86,8 @@ class ReduceLayer_fc2(nn.Module):
 
 
 def convert_opt_model_dense(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only):
+    return model
+
     for name, module in tqdm(model.named_modules(), desc="Convert Opt Models"):
         if "fc1" in name or "fc2" in name:
             num=int(name.split('.')[3])
