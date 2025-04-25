@@ -54,10 +54,12 @@ def top_p_sampling(next_token_logits, tokenizer, top_p, generated):
 # Test Model
 def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p):
     model.eval()
-    if method in ['stable_guided', 'static_cut', 'dynamic_cut', 'dense', 'moving_cut', 'dynamic_cut_ci', 'score']:
+    if method in ['stable_guided', 'static_cut', 'dynamic_cut', 'dense', 'moving_cut', 'dynamic_cut_ci']:
         prompt = process_prompt_stable(ori_prompt, task_type, num_fewshot)
     elif method in ['similarity_guided']:
         prompt = process_prompt_similarity(ori_prompt, task_type)
+    elif method in ['score']:
+        prompt = ori_prompt
     input_ids = tokenizer.encode(prompt, return_tensors='pt').to(device)
 
     pre_fill_start_time = time.time()

@@ -8,8 +8,8 @@ def write_neuron_scores(scores: Tensor, dataset_output_path: str, command_str: s
     for layer_idx, layer_scores in enumerate(scores):
         file_str += f"{layer_idx}: "
         for neuron_score in layer_scores:
-            rounded_score = round(float(neuron_score), 3)
-            file_str += f"{rounded_score};"
+            # rounded_score = round(float(neuron_score), 3)
+            file_str += f"{int(neuron_score)};"
         file_str = file_str[:-1]
         file_str += "\n"
     

@@ -31,7 +31,8 @@ class CustomMLPLayer(nn.Module):
         self.neuron_num = neuron_num
         self.memory_limit = memory_limit
         
-        self.neuron_scores_list = []
+        # self.neuron_scores_list = []
+        self.neuron_scores_list = [torch.Tensor(neuron_num)]
 
 
     def forward(self, x):
@@ -40,8 +41,11 @@ class CustomMLPLayer(nn.Module):
         
         if (x.size(1)>1 and "down" in self.name):
             squeezed_x = x.clone().squeeze()
-            neuron_scores = get_neuron_scores(squeezed_x)
-            self.neuron_scores_list.append(neuron_scores)
+            # neuron_scores = get_neuron_scores(squeezed_x)
+            # self.neuron_scores_list.append(neuron_scores)
+            
+            indices_all = common.get_core_neurons(squeezed_x, self.token_sparsity, self.sparsity, self.weight.size(1))
+            self.neuron_scores_list[0][indices_all] += 1
         
         return x @ self.weight.T
 
@@ -49,6 +53,7 @@ class CustomMLPLayer(nn.Module):
 def convert_llama_model_score(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only):
     start_num = -1
     end_num = 32
+    sparsity = 0.6
     custom_layers = []
     
     for name, module in tqdm(model.named_modules(), desc="Convert Llama Models"):
