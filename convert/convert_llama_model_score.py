@@ -47,7 +47,7 @@ class CustomMLPLayer(nn.Module):
 
 
 def convert_llama_model_score(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only):
-    start_num = 0
+    start_num = -1
     end_num = 32
     custom_layers = []
     

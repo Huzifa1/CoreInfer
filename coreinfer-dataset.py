@@ -206,8 +206,8 @@ def main(output_path, method, model_name, checkpoint_path, sparsity, start_num, 
         write_neuron_scores(scores, output_path, command_str, n_prompts)
         
     
-    if not no_evaluate:
-        evaluate_inference_updated(output_path, dataset_name)
+    # if not no_evaluate:
+    #     evaluate_inference_updated(output_path, dataset_name)
         
         
 
