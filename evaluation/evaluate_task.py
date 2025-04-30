@@ -25,7 +25,7 @@ def evaluate(task_name, model, tokenizer, num_fewshot, device, limit, output_pat
         tasks = [task_name],
         num_fewshot=num_fewshot,
         limit = limit,
-        simple_evaluate=True,
+        log_samples=True,
         random_seed=42,
         write_out=True
     )

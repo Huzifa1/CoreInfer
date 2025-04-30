@@ -7,7 +7,7 @@ NUM_PROMPTS='1000'
 run_inference()
 {
     echo RUN $METHOD for $TASK_NAME
-    python evaluation/evaluate_task.py --model_name $MODEL_NAME --checkpoint_path $CHECKPOINT_PATH --sparsity $SPARSITY --token_sparsity $TOKEN_SPARSITY --limit $NUM_PROMPTS --method $METHOD --task_name $TASK_NAME
+    python evaluation/evaluate_task.py --model_name $MODEL_NAME --checkpoint_path $CHECKPOINT_PATH --sparsity $SPARSITY --token_sparsity $TOKEN_SPARSITY --limit $NUM_PROMPTS --method $METHOD --task_name $TASK_NAME --cpu_only
 }
 
 run_task()
