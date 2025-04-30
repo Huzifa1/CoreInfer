@@ -24,7 +24,10 @@ def evaluate(task_name, model, tokenizer, num_fewshot, device, limit, output_pat
         model = hflm,
         tasks = [task_name],
         num_fewshot=num_fewshot,
-        limit = limit
+        limit = limit,
+        simple_evaluate=True,
+        random_seed=42,
+        write_out=True
     )
     
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -59,7 +62,7 @@ if __name__ == '__main__':
     parser.add_argument('--limit', type=int, default=1000, help='Max number of samples to evaluate.')
     parser.add_argument('--token_sparsity', type=float, default=0.2, help='Token Sparsity level.')
     parser.add_argument('--memory_limit', action='store_true', help='Enable memory limit.')
-    parser.add_argument('--method', type=str, choices=['stable_guided', 'similarity_guided'], default='stable_guided', help='Method to use (default: stable_guided).')
+    parser.add_argument('--method', type=str, choices=['stable_guided', 'similarity_guided', 'dynamic_cut', 'dynamic_cut_ci', 'dense', 'static_cut', 'moving_cut', 'sparsity_levels', 'score'], default='stable_guided', help='Method to use (default: stable_guided).')
     parser.add_argument('--cluster_path', type=str, default=None, help='Optional cluster path.')
     parser.add_argument('--output_path', type=Path, default=None, help='Path to output file.')
     parser.add_argument('--cpu_only', action='store_true', help='Run inference on CPU only.')

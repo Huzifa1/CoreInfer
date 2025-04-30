@@ -32,7 +32,7 @@ class CustomMLPLayer(nn.Module):
         self.memory_limit = memory_limit
         
         # self.neuron_scores_list = []
-        self.neuron_scores_list = [torch.Tensor(neuron_num)]
+        self.neuron_scores_list = []
 
 
     def forward(self, x):
@@ -45,7 +45,9 @@ class CustomMLPLayer(nn.Module):
             # self.neuron_scores_list.append(neuron_scores)
             
             indices_all = common.get_core_neurons(squeezed_x, self.token_sparsity, self.sparsity, self.weight.size(1))
-            self.neuron_scores_list[0][indices_all] += 1
+            neuron_scores = torch.zeros(self.neuron_num)
+            neuron_scores[indices_all] += 1
+            self.neuron_scores_list.append(neuron_scores)
         
         return x @ self.weight.T
 
