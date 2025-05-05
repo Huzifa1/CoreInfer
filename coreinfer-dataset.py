@@ -10,6 +10,8 @@ from datasets import load_from_disk
 from evaluation.evaluate_metrics_file import evaluate_inference, evaluate_inference_updated
 from scores.neuron_score_writer import write_neuron_scores
 
+from transformers.siot import USE_SIOT_IMPROVEMENTS, MASK_FILEPATH
+
 default_device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
@@ -54,12 +56,12 @@ def top_p_sampling(next_token_logits, tokenizer, top_p, generated):
 # Test Model
 def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p):
     model.eval()
-    if method in ['stable_guided', 'static_cut', 'dynamic_cut', 'dense', 'moving_cut', 'dynamic_cut_ci']:
+    if method in ['stable_guided', 'static_cut', 'dynamic_cut', 'dense', 'moving_cut', 'dynamic_cut_ci', 'score']:
         prompt = process_prompt_stable(ori_prompt, task_type, num_fewshot)
     elif method in ['similarity_guided']:
         prompt = process_prompt_similarity(ori_prompt, task_type)
-    elif method in ['score']:
-        prompt = ori_prompt
+    # elif method in ['score']:
+    #     prompt = ori_prompt
     input_ids = tokenizer.encode(prompt, return_tensors='pt').to(device)
 
     pre_fill_start_time = time.time()
@@ -126,8 +128,13 @@ def main(output_path, method, model_name, checkpoint_path, sparsity, start_num, 
 
     output_file = open(output_path, "a")
     output_str = ""
-    command_str = f"Command: {' '.join(sys.argv)}\n\n"
+    command_str = f"Command: {' '.join(sys.argv)}\n"
     output_str += command_str
+    
+    if USE_SIOT_IMPROVEMENTS:
+        output_str += f"mask: {MASK_FILEPATH}\n"
+    output_str += "\n\n"
+    
     dataset = load_from_disk(f"./dataset/{dataset_name}")
     
     sparsity_per_layer = [list() for element in range(0, num_layers)]

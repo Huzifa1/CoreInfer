@@ -55,7 +55,7 @@ class CustomMLPLayer(nn.Module):
 def convert_llama_model_score(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only):
     start_num = -1
     end_num = 32
-    sparsity = 0.6
+    sparsity = 0.4
     custom_layers = []
     
     for name, module in tqdm(model.named_modules(), desc="Convert Llama Models"):
