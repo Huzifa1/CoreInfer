@@ -7,6 +7,7 @@ import common
 
 from convert.relevant_neurons import get_neuron_scores
 
+USE_CUSTOM_SCORING = True
 
 indices_list_all = []
 
@@ -31,7 +32,6 @@ class CustomMLPLayer(nn.Module):
         self.neuron_num = neuron_num
         self.memory_limit = memory_limit
         
-        # self.neuron_scores_list = []
         self.neuron_scores_list = []
 
 
@@ -41,12 +41,15 @@ class CustomMLPLayer(nn.Module):
         
         if (x.size(1)>1 and "down" in self.name):
             squeezed_x = x.clone().squeeze()
-            # neuron_scores = get_neuron_scores(squeezed_x)
-            # self.neuron_scores_list.append(neuron_scores)
             
-            indices_all = common.get_core_neurons(squeezed_x, self.token_sparsity, self.sparsity, self.weight.size(1))
-            neuron_scores = torch.zeros(self.neuron_num)
-            neuron_scores[indices_all] += 1
+            if USE_CUSTOM_SCORING:
+                neuron_scores = get_neuron_scores(squeezed_x)
+                self.neuron_scores_list.append(neuron_scores)
+            else:
+                indices_all = common.get_core_neurons(squeezed_x, self.token_sparsity, self.sparsity, self.weight.size(1))
+                neuron_scores = torch.zeros(self.neuron_num)
+                neuron_scores[indices_all] += 1
+            
             self.neuron_scores_list.append(neuron_scores)
         
         return x @ self.weight.T
