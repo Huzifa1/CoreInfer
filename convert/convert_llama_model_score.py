@@ -7,7 +7,7 @@ import common
 
 from convert.relevant_neurons import get_neuron_scores
 
-USE_CUSTOM_SCORING = True
+USE_CUSTOM_SCORING = False
 
 indices_list_all = []
 
