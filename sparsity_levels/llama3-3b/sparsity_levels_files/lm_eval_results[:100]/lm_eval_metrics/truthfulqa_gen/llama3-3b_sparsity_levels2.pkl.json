@@ -1,0 +1,29 @@
+{
+    "truthfulqa_gen": {
+        "alias": "truthfulqa_gen",
+        "bleu_max,none": 3.737859407723789,
+        "bleu_max_stderr,none": 0.9352634272285169,
+        "bleu_acc,none": 0.22,
+        "bleu_acc_stderr,none": 0.04163331998932267,
+        "bleu_diff,none": 1.900776036752811,
+        "bleu_diff_stderr,none": 0.7983601866235135,
+        "rouge1_max,none": 10.050675159037848,
+        "rouge1_max_stderr,none": 1.895821871386633,
+        "rouge1_acc,none": 0.27,
+        "rouge1_acc_stderr,none": 0.04461960433384739,
+        "rouge1_diff,none": 3.3028581598577635,
+        "rouge1_diff_stderr,none": 1.5016270230152968,
+        "rouge2_max,none": 5.648193315144193,
+        "rouge2_max_stderr,none": 1.5454199340282093,
+        "rouge2_acc,none": 0.18,
+        "rouge2_acc_stderr,none": 0.038612291966536934,
+        "rouge2_diff,none": 3.198952809174122,
+        "rouge2_diff_stderr,none": 1.4929960591167726,
+        "rougeL_max,none": 9.135554007675033,
+        "rougeL_max_stderr,none": 1.8165129558673296,
+        "rougeL_acc,none": 0.26,
+        "rougeL_acc_stderr,none": 0.04408440022768078,
+        "rougeL_diff,none": 3.1905272092738732,
+        "rougeL_diff_stderr,none": 1.4473741932567352
+    }
+}

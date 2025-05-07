@@ -35,6 +35,10 @@ MODEL_INFO = {
     'llama3-8b': {
         'num_neurons': 14336,
         'activation_fn': torch.nn.SiLU
+    },
+    'llama3-3b': {
+        'num_neurons': 8192,
+        'activation_fn': torch.nn.SiLU
     }
 }
     
@@ -59,9 +63,6 @@ def get_layer_number(model_name, layer_name):
 
 def load_model(model_name, start_num, end_num, checkpoint_path, device, memory_limit):
     start_time = time.time()
-    
-    if (device == "cuda" and torch.cuda.is_available()):
-        device = 0
 
     if memory_limit == True:
         model, num_layers = load_model_memory_limit(checkpoint_path, start_num, end_num, model_name)
@@ -90,7 +91,7 @@ def convert_model(method, model, model_name, num_layers, sparsity, start_num, en
             model = convert_opt_model(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, sparsity_levels_path)
         elif method == 'similarity_guided':
             model = convert_opt_model_sim(model, num_layers, sparsity, start_num, end_num, memory_limit, cluster_path, cpu_only)
-        if method == 'dense':
+        elif method == 'dense':
             model = convert_opt_model_dense(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
             
         
@@ -310,17 +311,26 @@ def get_neurons_scores(x, sum_weight, count_weight, top_k):
     
     return total_scores
 
-
 def get_sparsity_levels(model_name, num_layers, sum_weight, count_weight, threshold, top_k, activations):
-    sparsity_levels = []
     num_neurons = MODEL_INFO[model_name]["num_neurons"]
-    for layer_num in range(num_layers):
-        A_tensor = concat_activations_per_layer(model_name, activations, layer_num)
-        total_scores = get_neurons_scores(A_tensor, sum_weight, count_weight, top_k)
-        number_of_hot_neurons = int((total_scores > threshold).sum())
-        sparsity_levels.append(round(number_of_hot_neurons / num_neurons, 2))
 
-    return sparsity_levels
+    sparsity_levels = []
+    for activation in activations:
+        current_levels = []
+        for layer_num in range(num_layers):
+            str_act = get_layer_name(model_name, layer_num)
+            tensor = activation[str_act]
+            if "llama" in model_name:
+                tensor = tensor.squeeze(0)
+            total_scores = get_neurons_scores(tensor, sum_weight, count_weight, top_k)
+            number_of_hot_neurons = int((total_scores > threshold).sum())
+            sparsity = round(number_of_hot_neurons / num_neurons, 2)
+            current_levels.append(sparsity)
+        sparsity_levels.append(current_levels)
+    
+    avg_sparsity_per_layer = [round(sum(layer_values) / len(sparsity_levels), 2) for layer_values in zip(*sparsity_levels)]
+
+    return avg_sparsity_per_layer
 
 
 def read_cluster_files(cluster_path, num_layers):

@@ -7,7 +7,7 @@ import pickle
 
 # Convert Opt Models
 class ReduceLayer(nn.Module):
-    def __init__(self, weight, bias, sparsity, token_sparsity, memory_limit, cpu_only):
+    def __init__(self, weight, bias, sparsity, token_sparsity, memory_limit, cpu_only, num):
         super(ReduceLayer, self).__init__()
         remained_neurons = int(weight.size(0) * sparsity)
         
@@ -20,7 +20,7 @@ class ReduceLayer(nn.Module):
         self.token_sparsity = token_sparsity
         self.cpu_only = cpu_only
         self.sparsity = sparsity
-    
+        self.num = num
     def forward(self, x):
         device = torch.device("cpu") if self.cpu_only else torch.device("cuda")
 
@@ -104,7 +104,7 @@ def convert_opt_model(model, sparsity, start_num, end_num, token_sparsity, memor
                     sparsity = sparsity_levels[num]
                     
                 if "fc1" in name:
-                    NewLayer = ReduceLayer(module.weight, module.bias, sparsity, token_sparsity, memory_limit, cpu_only)
+                    NewLayer = ReduceLayer(module.weight, module.bias, sparsity, token_sparsity, memory_limit, cpu_only, num)
                 else:
                     NewLayer = ReduceLayer_fc2(module.weight, module.bias, sparsity, memory_limit, cpu_only)
 

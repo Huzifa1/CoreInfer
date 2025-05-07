@@ -1,0 +1,1 @@
+{"triviaqa": {"alias": "triviaqa", "exact_match,remove_whitespace": 0.257, "exact_match_stderr,remove_whitespace": 0.013825416526895059}}

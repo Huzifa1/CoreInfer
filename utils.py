@@ -1,4 +1,5 @@
 import torch
+import common
 from transformers import AutoModelForCausalLM
 
 def process_prompt_stable(prompt, task_type, num_fewshot):
@@ -174,6 +175,58 @@ def process_data(dataset, dataset_name):
         
             
     return process_data
+
+
+
+def read_indecies_file(file_path, model_name, start_num, end_num):
+    num_neurons = common.MODEL_INFO[model_name]["num_neurons"]
+
+    results = []
+    current_results = None
+    current_layers_neurons = []
+    with open(file_path, "r") as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith("Applying sparsity"):
+                
+                if current_results is not None:
+                    results.append(current_results)
+                
+                task_name = line.split(" ")[-1]
+                sparsity_name = line.split(" ")[2]
+                current_results = {
+                    "task_name": task_name,
+                    "sparsity_name": sparsity_name,
+                    "results": []
+                }
+            elif line.startswith("Layer"):
+                neurons_num = int(line.split(" ")[-1])
+                layer_num = int(line.split(" ")[1].split(":")[0])
+                if layer_num == (start_num + 1):
+                    current_layers_neurons = []
+                    current_layers_neurons.append(neurons_num)
+                elif layer_num == (end_num - 1):
+                    current_layers_neurons.append(neurons_num)
+                    current_results["results"].append(current_layers_neurons)
+                else:
+                    current_layers_neurons.append(neurons_num)
+                
+        results.append(current_results)
+    
+    
+    output = []
+    for config in results:
+        avg = 0
+        for result in config["results"]:
+            avg += sum(result) / (num_neurons * (end_num - start_num - 1))
+        output.append({
+            "sparsity_name": config["sparsity_name"],
+            "task_name": config["task_name"],
+            "avg": avg / len(config["results"])
+        })
+    
+    return output
+    
     
 
 def load_opt_param(name, param, start_num, end_num):

@@ -1,0 +1,1 @@
+{"wmt16-de-en": {"alias": "wmt16-de-en", "bleu,none": 2.2928754134134883, "bleu_stderr,none": 0.10921972528392199, "ter,none": 433.0329879361266, "ter_stderr,none": 14.215861636678188, "chrf,none": 20.614525006883774, "chrf_stderr,none": 0.49947129513896615}}
