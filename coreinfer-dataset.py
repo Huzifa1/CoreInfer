@@ -7,7 +7,6 @@ from common import *
 from torch.nn.functional import softmax
 from datasets import load_from_disk
 
-from evaluation.evaluate_metrics_file import evaluate_inference, evaluate_inference_updated
 from scores.neuron_score_writer import write_neuron_scores
 
 from transformers.siot import USE_SIOT_IMPROVEMENTS, MASK_FILEPATH

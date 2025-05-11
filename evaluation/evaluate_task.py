@@ -6,6 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from utils import *
 from common import *
 import json
+from scores.neuron_score_writer import write_neuron_scores
 
 default_device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -42,6 +43,18 @@ def main(method, task_name, model_name, checkpoint_path, sparsity, start_num, en
     model = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path, cpu_only)
         
     evaluate(task_name, model, tokenizer, num_fewshot, device, limit, output_path)
+    
+    if (method == "score"):
+        num_layers = len(model.custom_layers)
+        num_neurons = model.custom_layers[0].neuron_num
+        scores = torch.zeros([num_layers, num_neurons])
+        for layer_idx, layer in enumerate(model.custom_layers):
+            for neuron_scores in layer.neuron_scores_list:
+                for neuron_idx, neuron_score in enumerate(neuron_scores):
+                    scores[layer_idx][neuron_idx] += neuron_score
+        n_prompts = len(model.custom_layers[0].neuron_scores_list)
+        command_str = f"Command: {' '.join(sys.argv)}\n"
+        write_neuron_scores(scores, output_path, command_str, n_prompts)
 
 
 
@@ -74,6 +87,10 @@ if __name__ == '__main__':
 
     if args.cpu_only and args.memory_limit:
         parser.error("The options --cpu_only and --memory_limit cannot be used together.")
+        
+    if (args.output_path == None):
+        timestr = time.strftime("%Y_%m_%d_%H_%M")
+        args.output_path = f"results/dataset_run_{timestr}_{args.method}.json"
     
     main(args.method, args.task_name, args.model_name, args.checkpoint_path, args.sparsity, args.start_num, args.end_num, args.token_sparsity,
          args.memory_limit, args.device, args.num_fewshot, args.limit, args.output_path, args.cluster_path, args.cpu_only)
