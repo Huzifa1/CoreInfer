@@ -3,10 +3,12 @@ from pathlib import Path
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path = sys.path[::-1]
 from utils import *
 from common import *
 import json
 from scores.neuron_score_writer import write_neuron_scores
+from transformers.siot import USE_SIOT_IMPROVEMENTS, MASK_FILEPATH
 
 default_device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -19,7 +21,7 @@ from lm_eval.api.registry import ALL_TASKS
 from lm_eval.models.huggingface import HFLM
 from lm_eval import evaluator
 
-def evaluate(task_name, model, tokenizer, num_fewshot, device, limit, output_path):
+def evaluate(task_name, model, tokenizer, num_fewshot, device, limit, output_path, method):
     hflm = HFLM(pretrained=model, tokenizer=tokenizer)
     results = evaluator.simple_evaluate(
         model = hflm,
@@ -32,6 +34,8 @@ def evaluate(task_name, model, tokenizer, num_fewshot, device, limit, output_pat
     )
     
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    if (method == "score" and USE_SIOT_IMPROVEMENTS):
+        results["mask_name"] = MASK_FILEPATH
     with open(output_path, 'w') as file:
         json.dump(results['results'], file)
 
@@ -42,7 +46,7 @@ def main(method, task_name, model_name, checkpoint_path, sparsity, start_num, en
     
     model = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path, cpu_only)
         
-    evaluate(task_name, model, tokenizer, num_fewshot, device, limit, output_path)
+    evaluate(task_name, model, tokenizer, num_fewshot, device, limit, output_path, method)
     
     if (method == "score"):
         num_layers = len(model.custom_layers)
@@ -91,6 +95,7 @@ if __name__ == '__main__':
     if (args.output_path == None):
         timestr = time.strftime("%Y_%m_%d_%H_%M")
         args.output_path = f"results/dataset_run_{timestr}_{args.method}.json"
+        print(f"Use filename {args.output_path}\n")
     
     main(args.method, args.task_name, args.model_name, args.checkpoint_path, args.sparsity, args.start_num, args.end_num, args.token_sparsity,
          args.memory_limit, args.device, args.num_fewshot, args.limit, args.output_path, args.cluster_path, args.cpu_only)

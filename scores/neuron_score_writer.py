@@ -13,7 +13,8 @@ def write_neuron_scores(scores: Tensor, dataset_output_path: str, command_str: s
         file_str = file_str[:-1]
         file_str += "\n"
     
-        output_path = dataset_output_path.replace("_score", "").replace("dataset_run", "scores").replace(".txt", ".score")
+        file_type = dataset_output_path.split(".")[-1]
+        output_path = dataset_output_path.replace("_score", "").replace("dataset_run", "scores").replace(f".{file_type}", ".score")
         with open(output_path, "a") as output_file:
             output_file.write(file_str)
         file_str = ""
