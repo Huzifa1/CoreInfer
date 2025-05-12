@@ -2,8 +2,7 @@ import torch
 from pathlib import Path
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-sys.path = sys.path[::-1]
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from utils import *
 from common import *
 import json
@@ -34,10 +33,13 @@ def evaluate(task_name, model, tokenizer, num_fewshot, device, limit, output_pat
     )
     
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    if (method == "score" and USE_SIOT_IMPROVEMENTS):
-        results["mask_name"] = MASK_FILEPATH
+    result_dict = results['results']
+    if (USE_SIOT_IMPROVEMENTS):
+        result_dict["mask_name"] = MASK_FILEPATH
+    command_str = f"Command: {' '.join(sys.argv)}"
+    result_dict['command'] = command_str
     with open(output_path, 'w') as file:
-        json.dump(results['results'], file)
+        json.dump(result_dict, file)
 
 
 
