@@ -15,12 +15,6 @@ run()
 }
 
 cd ..
-SPARSITY=0.05
-run
-SPARSITY=0.1
-run
-SPARSITY=0.15
-run
 SPARSITY=0.2
 run
 SPARSITY=0.25
