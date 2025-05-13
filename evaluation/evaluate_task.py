@@ -8,6 +8,7 @@ from common import *
 import json
 from scores.neuron_score_writer import write_neuron_scores
 from transformers.siot import USE_SIOT_IMPROVEMENTS, MASK_FILEPATH
+from convert.convert_llama_model_score import SPARSITY_LEVELS
 
 default_device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -53,14 +54,15 @@ def main(method, task_name, model_name, checkpoint_path, sparsity, start_num, en
     if (method == "score"):
         num_layers = len(model.custom_layers)
         num_neurons = model.custom_layers[0].neuron_num
-        scores = torch.zeros([num_layers, num_neurons])
-        for layer_idx, layer in enumerate(model.custom_layers):
-            for neuron_scores in layer.neuron_scores_list:
-                for neuron_idx, neuron_score in enumerate(neuron_scores):
-                    scores[layer_idx][neuron_idx] += neuron_score
-        n_prompts = len(model.custom_layers[0].neuron_scores_list)
-        command_str = f"Command: {' '.join(sys.argv)}\n"
-        write_neuron_scores(scores, output_path, command_str, n_prompts)
+        for sparsity_level_idx, sparsity_level in enumerate(SPARSITY_LEVELS):
+            scores = torch.zeros([num_layers, num_neurons])
+            for layer_idx, layer in enumerate(model.custom_layers):
+                for neuron_scores in layer.neuron_scores_list[sparsity_level_idx]:
+                    for neuron_idx, neuron_score in enumerate(neuron_scores):
+                        scores[layer_idx][neuron_idx] += neuron_score
+            n_prompts = len(model.custom_layers[0].neuron_scores_list)
+            command_str = f"Command: {' '.join(sys.argv)}\n"
+            write_neuron_scores(scores, output_path, command_str, n_prompts, sparsity_level, task_name)
 
 
 
