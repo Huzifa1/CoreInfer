@@ -45,6 +45,9 @@ def evaluate(task_name, model, tokenizer, num_fewshot, device, limit, output_pat
 
 
 def main(method, task_name, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, memory_limit, device, num_fewshot, limit, output_path, cluster_path = None, cpu_only = None):    
+    if (USE_SIOT_IMPROVEMENTS):
+        print(f"SIOT: Use Mask for partial loading, mask file: {MASK_FILEPATH}")
+    
     model, tokenizer, num_layers = load_model(model_name, start_num, end_num, checkpoint_path, device, memory_limit)
     
     model = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path, cpu_only)
@@ -98,8 +101,8 @@ if __name__ == '__main__':
         
     if (args.output_path == None):
         timestr = time.strftime("%Y_%m_%d_%H_%M")
-        args.output_path = f"results/dataset_run_{timestr}_{args.method}.json"
-        print(f"Use filename {args.output_path}\n")
+        args.output_path = f"results/dataset_run_{timestr}_{args.task_name}_{args.method}.json"
+    print(f"Use filename {args.output_path}\n")
     
     main(args.method, args.task_name, args.model_name, args.checkpoint_path, args.sparsity, args.start_num, args.end_num, args.token_sparsity,
          args.memory_limit, args.device, args.num_fewshot, args.limit, args.output_path, args.cluster_path, args.cpu_only)

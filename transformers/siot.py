@@ -1,5 +1,5 @@
 USE_SIOT_IMPROVEMENTS = False
-MASK_FILEPATH = "masks/scores_2025_04_27_13_11_0.7_4_26.mask"
+from transformers.mask_filepath import MASK_FILEPATH
 
 
 def get_used_neurons_count(layer_id: int) -> int:
