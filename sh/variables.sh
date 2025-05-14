@@ -1,5 +1,5 @@
 #!/bin/sh
 
-DATE='2025_05_13_14_57'
-TASK_NAME=wmdp_cyber
-LIMIT=300
+DATE='2025_05_14_13_28'
+TASK_NAME=wmt16-de-en
+LIMIT=200

@@ -60,9 +60,7 @@ def main(method, task_name, model_name, checkpoint_path, sparsity, start_num, en
         for sparsity_level_idx, sparsity_level in enumerate(SPARSITY_LEVELS):
             scores = torch.zeros([num_layers, num_neurons])
             for layer_idx, layer in enumerate(model.custom_layers):
-                for neuron_scores in layer.neuron_scores_list[sparsity_level_idx]:
-                    for neuron_idx, neuron_score in enumerate(neuron_scores):
-                        scores[layer_idx][neuron_idx] += neuron_score
+                scores[layer_idx] = layer.neuron_scores_list[sparsity_level_idx]
             n_prompts = len(model.custom_layers[0].neuron_scores_list)
             command_str = f"Command: {' '.join(sys.argv)}\n"
             write_neuron_scores(scores, output_path, command_str, n_prompts, sparsity_level, task_name)

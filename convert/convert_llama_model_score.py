@@ -7,7 +7,6 @@ import common
 
 from convert.relevant_neurons import get_neuron_scores
 
-USE_CUSTOM_SCORING = False
 SPARSITY_LEVELS = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5]
 
 indices_list_all = []
@@ -34,8 +33,7 @@ class CustomMLPLayer(nn.Module):
         self.memory_limit = memory_limit
         
         self.neuron_scores_list = []
-        if not USE_CUSTOM_SCORING:
-            [self.neuron_scores_list.append([]) for x in SPARSITY_LEVELS]
+        [self.neuron_scores_list.append(torch.zeros(neuron_num)) for x in SPARSITY_LEVELS]
 
 
     def forward(self, x):
@@ -45,15 +43,9 @@ class CustomMLPLayer(nn.Module):
         if (x.size(1)>1 and "down" in self.name):
             squeezed_x = x.clone().squeeze()
             
-            if USE_CUSTOM_SCORING:
-                neuron_scores = get_neuron_scores(squeezed_x)
-                self.neuron_scores_list.append(neuron_scores)
-            else:
-                for sparsity_level_idx, sparsity_level in enumerate(SPARSITY_LEVELS):
-                    indices_all = common.get_core_neurons(squeezed_x, self.token_sparsity, sparsity_level, self.weight.size(1))
-                    neuron_scores = torch.zeros(self.neuron_num)
-                    neuron_scores[indices_all] += 1
-                    self.neuron_scores_list[sparsity_level_idx].append(neuron_scores)
+            for sparsity_level_idx, sparsity_level in enumerate(SPARSITY_LEVELS):
+                indices_all = common.get_core_neurons(squeezed_x, self.token_sparsity, sparsity_level, self.weight.size(1))
+                self.neuron_scores_list[sparsity_level_idx][indices_all] += 1
             
         
         return x @ self.weight.T

@@ -1,7 +1,7 @@
 
-TASK_NAME='triviaqa'
+TASK_NAME='wmt16-de-en'
 LIMIT=800
-NUM_FEWSHOT=3
+NUM_FEWSHOT=0
 
 
 cd ..
