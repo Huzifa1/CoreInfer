@@ -1,5 +1,6 @@
-USE_SIOT_IMPROVEMENTS = False
-from transformers.mask_filepath import MASK_FILEPATH
+
+from transformers.siot_variables.siot_improvements import USE_SIOT_IMPROVEMENTS
+from transformers.siot_variables.mask_filepath import MASK_FILEPATH
 
 
 def get_used_neurons_count(layer_id: int) -> int:
