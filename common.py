@@ -2,6 +2,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from datasets import load_from_disk
 from convert.convert_opt_model import convert_opt_model
 from convert.convert_opt_model_sim import convert_opt_model_sim
+from convert.convert_opt_model_model_neurons import convert_opt_model_model_neurons
 from convert.convert_llama_model import convert_llama_model
 from convert.convert_llama_model_sim import convert_llama_model_sim
 
@@ -12,6 +13,8 @@ from convert.convert_llama_model_static_cut import convert_llama_model_static_cu
 from convert.convert_llama_model_dense import convert_llama_model_dense
 from convert.convert_llama_model_moving_cut import convert_llama_model_moving_cut
 from convert.convert_opt_model_dense import convert_opt_model_dense
+from convert.convert_llama_model_model_neurons import convert_llama_model_model_neurons
+from convert.convert_llama_model_hybrid_neurons import convert_llama_model_hybrid_neurons
 
 from utils import *
 from sklearn.cluster import KMeans
@@ -69,7 +72,7 @@ def load_model(model_name, start_num, end_num, checkpoint_path, device, memory_l
     else:
         model = AutoModelForCausalLM.from_pretrained(checkpoint_path, device_map=device, torch_dtype=torch.float16)
         num_layers = model.config.num_hidden_layers
-        
+
     tokenizer = AutoTokenizer.from_pretrained(checkpoint_path, device_map=device)
 
     if tokenizer.pad_token is None:
@@ -81,9 +84,7 @@ def load_model(model_name, start_num, end_num, checkpoint_path, device, memory_l
     print(f"Done. Loaded model in {elapsed_time:.2f} seconds.\n")
     return model, tokenizer, num_layers
 
-
-
-def convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path=None, cpu_only = False, sparsity_levels_path=None):
+def convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path=None, cpu_only = False, sparsity_levels_path=None, hybrid_split = None):
     start_time = time.time()
 
     if "opt" in model_name:
@@ -93,9 +94,10 @@ def convert_model(method, model, model_name, num_layers, sparsity, start_num, en
             model = convert_opt_model_sim(model, num_layers, sparsity, start_num, end_num, memory_limit, cluster_path, cpu_only)
         elif method == 'dense':
             model = convert_opt_model_dense(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
-            
-        
-    elif "llama" in model_name:
+        elif method == 'model_neurons':
+            model = convert_opt_model_model_neurons(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
+
+    elif "llama" in model_name.lower():
         if method == 'stable_guided':
             model = convert_llama_model(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, sparsity_levels_path)
         elif method == 'similarity_guided':
@@ -112,8 +114,12 @@ def convert_model(method, model, model_name, num_layers, sparsity, start_num, en
             model = convert_llama_model_moving_cut(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
         elif method == 'score':
             model = convert_llama_model_score(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
-            
-    
+        elif method == 'model_neurons':
+            model = convert_llama_model_model_neurons(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
+        elif method == 'hybrid_neurons':
+            model = convert_llama_model_hybrid_neurons(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, hybrid_split)
+     
+    print(f"Converting model {model_name} using method {method}...")
     end_time = time.time()
     elapsed_time = end_time - start_time
     print(f"Done. Converted model in {elapsed_time:.2f} seconds.\n")
@@ -132,12 +138,35 @@ def get_core_neurons(x, token_sparsity, sparsity, neuron_num = None):
 
     if (neuron_num is not None):
         remained_neurons = int(neuron_num * sparsity)
-    else: 
+    else:
         # Then calculate them dynamically based on the size of `sorted_indices_clu`
         remained_neurons = int(len(sorted_indices_clu) * sparsity)
 
     indices_all = sorted_indices_clu[:remained_neurons].cpu()
+    return indices_all
 
+def get_model_neurons(sparsity, model_neurons, neuron_num=None, layer_num=None):
+    remained_neurons = int(neuron_num * sparsity)
+    indices_all = model_neurons[layer_num, :remained_neurons]
+    indices_all = indices_all[indices_all != -1]
+    return indices_all
+
+def get_hybrid_neurons(x, token_sparsity, sparsity, hybrid_split, neuron_num=None):
+    remained_neurons = int(neuron_num * sparsity)
+    core_neuron_num = int(remained_neurons * hybrid_split)
+
+    if core_neuron_num > 0:
+        sorted_values, sorted_indices = torch.sort(x, dim=1, descending=True)
+        limit=int(token_sparsity * (x > 0).sum().item() / x.size(0))
+        top_indices = sorted_indices[:, :limit]
+        data_flattened = top_indices.reshape(-1)
+        unique_numbers, counts = data_flattened.unique(return_counts=True, sorted=True)
+        sorted_indices = torch.argsort(counts, descending=True)
+        sorted_indices_clu = unique_numbers[sorted_indices]
+        indices_all = sorted_indices_clu[:core_neuron_num].cpu()
+    else:
+        indices_all = torch.tensor([], dtype=torch.long)
+    
     return indices_all
 
 def get_core_neurons_improved(x, token_sparsity, sparsity, neuron_num):
