@@ -5,12 +5,12 @@ from tqdm import tqdm
 import common
 import pickle
 
+
 # Convert Opt Models
 class ReduceLayer(nn.Module):
     def __init__(self, weight, bias, sparsity, token_sparsity, memory_limit, cpu_only, num):
         super(ReduceLayer, self).__init__()
         remained_neurons = int(weight.size(0) * sparsity)
-        
         self.bias = bias.clone()
         self.weight = weight.clone()
         self.filtered_W = torch.zeros((remained_neurons, weight.size(1))).to(torch.float16).cpu()
@@ -21,21 +21,18 @@ class ReduceLayer(nn.Module):
         self.cpu_only = cpu_only
         self.sparsity = sparsity
         self.num = num
+
     def forward(self, x):
         device = torch.device("cpu") if self.cpu_only else torch.device("cuda")
-
         if x.size(0)>1:
             self.weight = self.weight.to(x.device).to(torch.float16)
             self.bias = self.bias.to(x.device).to(torch.float16)
             true_value1 = x @ self.weight.T + self.bias
             true_value = true_value1.clone()
-
             indices_all = common.get_core_neurons(true_value1, self.token_sparsity, self.sparsity, self.weight.size(0))
-
             if self.memory_limit or self.cpu_only:
                 self.weight = self.weight.to("cpu")
                 self.bias = self.bias.to("cpu")
-            
             
             self.filtered_W = self.weight[indices_all,:].clone().cpu().to(device).to(torch.float16)
             self.filtered_bias = self.bias[indices_all].clone().cpu().to(device).to(torch.float16)
@@ -45,7 +42,7 @@ class ReduceLayer(nn.Module):
             
         else:
             true_value = x @ self.filtered_W.T.to(device) + self.filtered_bias.to(device)
-            
+
         return true_value
 
 
@@ -78,7 +75,6 @@ class ReduceLayer_fc2(nn.Module):
             
         else:
             true_value = x @ self.filtered_W.T.to(device) + self.bias.to(device)
-            
         return true_value
 
 
@@ -111,7 +107,6 @@ def convert_opt_model(model, sparsity, start_num, end_num, token_sparsity, memor
                 setattr(parent, attr_name, NewLayer)
                 del module
                 
-   
     gc.collect()
     
     return model

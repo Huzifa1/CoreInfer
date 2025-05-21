@@ -4,11 +4,11 @@ import gc
 import torch
 from tqdm import tqdm
 import common
-import pickle
+
 indices_list_all = []
 
 class CustomMLPLayer(nn.Module):
-    def __init__(self, weight, num, sparsity, start_num, token_sparsity, memory_limit, cpu_only, name):
+    def __init__(self, model_neurons, weight, num, sparsity, start_num, token_sparsity, memory_limit, cpu_only, name, hybrid_split):
         super(CustomMLPLayer, self).__init__()
 
         device = torch.device("cpu") if memory_limit or cpu_only else torch.device("cuda")
@@ -30,10 +30,9 @@ class CustomMLPLayer(nn.Module):
         self.start_num = start_num
         self.neuron_num = neuron_num
         self.memory_limit = memory_limit
-        
-        self.activation_ratio = 0.0
-        
-
+        self.model_neurons = model_neurons
+        self.hybrid_split = hybrid_split
+        self.model_indices = common.get_model_neurons(self.sparsity*self.hybrid_split, self.model_neurons, self.weight.size(1), self.num)
 
     def forward(self, x):
         device = torch.device("cpu") if self.cpu_only else torch.device("cuda")
@@ -45,12 +44,10 @@ class CustomMLPLayer(nn.Module):
 
             if "down" in self.name:
                 squeezed_x = x.clone().squeeze()
-                indices_all = common.get_core_neurons(squeezed_x, self.token_sparsity, self.sparsity, self.weight.size(1))
+                core_indices = common.get_core_neurons(squeezed_x, self.token_sparsity, self.sparsity - (self.sparsity*self.hybrid_split), self.weight.size(1))
+                indices_all = torch.cat([self.model_indices, core_indices]).unique(sorted=True)
                 print(indices_all.shape)
 
-                number_of_neurons = squeezed_x.shape[1]
-                self.activation_ratio = len(indices_all) / number_of_neurons
-                
                 if self.memory_limit:
                     self.weight = self.weight.cpu()
                     self.filtered_W = torch.zeros_like(self.weight).cuda().to(torch.float16)
@@ -67,8 +64,6 @@ class CustomMLPLayer(nn.Module):
             if "down" not in self.name:
                 if not self.weight_updated:
                     indices = indices_list_all[self.num - (self.start_num + 1)]
-                    number_of_neurons = self.weight.shape[0]
-                    self.activation_ratio = len(indices) / number_of_neurons
                     self.filtered_W = self.weight[indices,:].clone().to(device)
                     if self.memory_limit:
                         self.weight = self.weight.cpu()
@@ -77,16 +72,22 @@ class CustomMLPLayer(nn.Module):
             true_value = x @ self.filtered_W.T
         return true_value
 
+def load_model_neurons_tensor():
+    file = "/local/artemb/CoreInfer/convert/model_neurons_llama3.txt"
+    with open(file, "r") as f:
+        lines = f.readlines()
+        data = [list(map(int, line.strip().strip("[]").split(","))) for line in lines]
 
-def convert_llama_model(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, sparsity_levels_path):
-    custom_layers = []
-    
-    sparsity_levels = None
-    if sparsity_levels_path is not None:
-        with open(sparsity_levels_path, 'rb') as f:
-            sparsity_levels = pickle.load(f)
+    max_len = max(len(row) for row in data)
+    padded = [row + [-1]*(max_len - len(row)) for row in data]
+    return torch.tensor(padded, dtype=torch.long).contiguous()
 
+def convert_llama_model_hybrid_neurons(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, hybrid_split):
+    global model_neurons
+    model_neurons = load_model_neurons_tensor()
+    c = 0
     for name, module in tqdm(model.named_modules(), desc="Convert Llama Models"):
+        c += 1
         if "down" in name or "up" in name or "gate" in name:
             num=int(name.split('.')[2])
             if num>start_num and num<end_num:
@@ -96,15 +97,11 @@ def convert_llama_model(model, sparsity, start_num, end_num, token_sparsity, mem
                     parent = dict(model.named_modules())[parent_name]
                 else:
                     parent = model # for lm_head
-                    
-                if sparsity_levels is not None:
-                    sparsity = sparsity_levels[num]
 
-                NewLayer = CustomMLPLayer(module.weight, num, sparsity, start_num, token_sparsity, memory_limit, cpu_only, name)
+                NewLayer = CustomMLPLayer(model_neurons, module.weight, num, sparsity, start_num, token_sparsity, memory_limit, cpu_only, name, hybrid_split)
                 setattr(parent, attr_name, NewLayer)
                 del module
-                custom_layers.append(NewLayer)
 
     gc.collect()
-    model.custom_layers = custom_layers
+    print(c)
     return model
