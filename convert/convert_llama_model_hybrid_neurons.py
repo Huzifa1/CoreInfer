@@ -30,9 +30,8 @@ class CustomMLPLayer(nn.Module):
         self.start_num = start_num
         self.neuron_num = neuron_num
         self.memory_limit = memory_limit
-        self.model_neurons = model_neurons
+        self.model_neurons = model_neurons[num]
         self.hybrid_split = hybrid_split
-        self.model_indices = common.get_model_neurons(self.sparsity*self.hybrid_split, self.model_neurons, self.weight.size(1), self.num)
 
     def forward(self, x):
         device = torch.device("cpu") if self.cpu_only else torch.device("cuda")
@@ -45,8 +44,17 @@ class CustomMLPLayer(nn.Module):
             if "down" in self.name:
                 squeezed_x = x.clone().squeeze()
                 core_indices = common.get_core_neurons(squeezed_x, self.token_sparsity, self.sparsity - (self.sparsity*self.hybrid_split), self.weight.size(1))
-                indices_all = torch.cat([self.model_indices, core_indices]).unique(sorted=True)
-                print(indices_all.shape)
+                split_model_indices = self.model_neurons[:int(self.sparsity*self.hybrid_split*self.weight.size(1))]
+                indices_all = torch.cat([split_model_indices, core_indices]).unique(sorted=True)
+                
+                # Ensure indices_all has at least shape self.sparsity
+                target_size = int(self.weight.size(1) * self.sparsity)
+                if len(indices_all) < target_size:
+                    remaining_model_indecies = self.model_neurons[len(split_model_indices):]
+                    mask = ~torch.isin(remaining_model_indecies, indices_all)
+                    to_add = remaining_model_indecies[mask]
+                    needed = target_size - len(indices_all)
+                    indices_all = torch.cat((indices_all, to_add[:needed]))
 
                 if self.memory_limit:
                     self.weight = self.weight.cpu()
