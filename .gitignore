@@ -6,6 +6,7 @@ ignore/
 results/
 masks/
 !transformers/models/
+neurons/current_neurons_always_to_compute.txt
 
 *.pyc
 

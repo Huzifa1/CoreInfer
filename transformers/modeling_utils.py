@@ -815,7 +815,7 @@ def _load_state_dict_into_meta_model(
 
             # SIOT: Filter param here
             if (USE_SIOT_IMPROVEMENTS and ("mlp" in param_name or "fc" in param_name)):
-                indices = get_used_neurons(param_name)
+                indices = get_used_neurons(param_name, is_loading=True)
                 # LLAMA
                 if ("mlp" in param_name):
                     if ("down" in param_name):

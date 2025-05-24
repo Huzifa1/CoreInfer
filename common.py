@@ -6,6 +6,7 @@ from convert.convert_opt_model_model_neurons import convert_opt_model_model_neur
 from convert.convert_llama_model import convert_llama_model
 from convert.convert_llama_model_sim import convert_llama_model_sim
 
+from convert.convert_llama_model_siot import convert_llama_model_siot
 from convert.convert_llama_model_score import convert_llama_model_score
 from convert.convert_llama_model_dynamic_cut import convert_llama_model_dynamic_cut
 from convert.convert_llama_model_dynamic_cut_ci import convert_llama_model_dynamic_cut_ci
@@ -114,6 +115,8 @@ def convert_model(method, model, model_name, num_layers, sparsity, start_num, en
             model = convert_llama_model_moving_cut(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
         elif method == 'score':
             model = convert_llama_model_score(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
+        elif method == 'siot':
+            model = convert_llama_model_siot(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
         elif method == 'model_neurons':
             model = convert_llama_model_model_neurons(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
         elif method == 'hybrid_neurons':
@@ -143,30 +146,7 @@ def get_core_neurons(x, token_sparsity, sparsity, neuron_num = None):
         remained_neurons = int(len(sorted_indices_clu) * sparsity)
 
     indices_all = sorted_indices_clu[:remained_neurons].cpu()
-    return indices_all
 
-def get_model_neurons(sparsity, model_neurons, neuron_num=None, layer_num=None):
-    remained_neurons = int(neuron_num * sparsity)
-    indices_all = model_neurons[layer_num, :remained_neurons]
-    indices_all = indices_all[indices_all != -1]
-    return indices_all
-
-def get_hybrid_neurons(x, token_sparsity, sparsity, hybrid_split, neuron_num=None):
-    remained_neurons = int(neuron_num * sparsity)
-    core_neuron_num = int(remained_neurons * hybrid_split)
-
-    if core_neuron_num > 0:
-        sorted_values, sorted_indices = torch.sort(x, dim=1, descending=True)
-        limit=int(token_sparsity * (x > 0).sum().item() / x.size(0))
-        top_indices = sorted_indices[:, :limit]
-        data_flattened = top_indices.reshape(-1)
-        unique_numbers, counts = data_flattened.unique(return_counts=True, sorted=True)
-        sorted_indices = torch.argsort(counts, descending=True)
-        sorted_indices_clu = unique_numbers[sorted_indices]
-        indices_all = sorted_indices_clu[:core_neuron_num].cpu()
-    else:
-        indices_all = torch.tensor([], dtype=torch.long)
-    
     return indices_all
 
 def get_core_neurons_improved(x, token_sparsity, sparsity, neuron_num):
