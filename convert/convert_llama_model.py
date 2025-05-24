@@ -46,7 +46,6 @@ class CustomMLPLayer(nn.Module):
             if "down" in self.name:
                 squeezed_x = x.clone().squeeze()
                 indices_all = common.get_core_neurons(squeezed_x, self.token_sparsity, self.sparsity, self.weight.size(1))
-                print(indices_all.shape)
 
                 number_of_neurons = squeezed_x.shape[1]
                 self.activation_ratio = len(indices_all) / number_of_neurons

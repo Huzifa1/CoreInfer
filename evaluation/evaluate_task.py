@@ -7,7 +7,7 @@ from utils import *
 from common import *
 import json
 from scores.neuron_score_writer import write_neuron_scores
-from transformers.siot import USE_SIOT_IMPROVEMENTS, MASK_FILEPATH
+from transformers.siot import USE_SIOT_IMPROVEMENTS, MASK_FILEPATH, USE_MASKFILE
 from convert.convert_llama_model_score import SPARSITY_LEVELS
 
 default_device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -35,7 +35,7 @@ def evaluate(task_name, model, tokenizer, num_fewshot, device, limit, output_pat
     
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     result_dict = results['results']
-    if (USE_SIOT_IMPROVEMENTS):
+    if (USE_SIOT_IMPROVEMENTS and USE_MASKFILE):
         result_dict["mask_name"] = MASK_FILEPATH
     command_str = f"Command: {' '.join(sys.argv)}"
     result_dict['command'] = command_str
@@ -45,7 +45,7 @@ def evaluate(task_name, model, tokenizer, num_fewshot, device, limit, output_pat
 
 
 def main(method, task_name, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, memory_limit, device, num_fewshot, limit, output_path, cluster_path = None, cpu_only = None):    
-    if (USE_SIOT_IMPROVEMENTS):
+    if (USE_SIOT_IMPROVEMENTS and USE_MASKFILE):
         print(f"SIOT: Use Mask for partial loading, mask file: {MASK_FILEPATH}")
     
     model, tokenizer, num_layers = load_model(model_name, start_num, end_num, checkpoint_path, device, memory_limit)
