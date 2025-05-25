@@ -44,13 +44,13 @@ def evaluate(task_name, model, tokenizer, num_fewshot, device, limit, output_pat
 
 
 
-def main(method, task_name, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, memory_limit, device, num_fewshot, limit, output_path, cluster_path = None, cpu_only = None):    
+def main(method, task_name, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, memory_limit, device, num_fewshot, limit, output_path, cluster_path = None, cpu_only = None, hybrid_split = None):    
     if (USE_SIOT_IMPROVEMENTS and USE_MASKFILE):
         print(f"SIOT: Use Mask for partial loading, mask file: {MASK_FILEPATH}")
     
     model, tokenizer, num_layers = load_model(model_name, start_num, end_num, checkpoint_path, device, memory_limit)
     
-    model = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path, cpu_only)
+    model = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path, cpu_only, hybrid_split)
         
     evaluate(task_name, model, tokenizer, num_fewshot, device, limit, output_path, method)
     
@@ -83,7 +83,7 @@ if __name__ == '__main__':
     parser.add_argument('--limit', type=int, default=1000, help='Max number of samples to evaluate.')
     parser.add_argument('--token_sparsity', type=float, default=0.2, help='Token Sparsity level.')
     parser.add_argument('--memory_limit', action='store_true', help='Enable memory limit.')
-    parser.add_argument('--method', type=str, choices=['stable_guided', 'similarity_guided', 'dynamic_cut', 'dynamic_cut_ci', 'dense', 'static_cut', 'moving_cut', 'sparsity_levels', 'score', 'siot'], default='stable_guided', help='Method to use (default: stable_guided).')
+    parser.add_argument('--method', type=str, choices=['stable_guided', 'similarity_guided', 'dynamic_cut', 'dynamic_cut_ci', 'dense', 'static_cut', 'moving_cut', 'sparsity_levels', 'score', 'siot', 'model_neurons', 'hybrid_neurons'], default='stable_guided', help='Method to use (default: stable_guided).')
     parser.add_argument('--cluster_path', type=str, default=None, help='Optional cluster path.')
     parser.add_argument('--output_path', type=Path, default=None, help='Path to output file.')
     parser.add_argument('--cpu_only', action='store_true', help='Run inference on CPU only.')
@@ -103,7 +103,7 @@ if __name__ == '__main__':
     print(f"Use filename {args.output_path}\n")
     
     main(args.method, args.task_name, args.model_name, args.checkpoint_path, args.sparsity, args.start_num, args.end_num, args.token_sparsity,
-         args.memory_limit, args.device, args.num_fewshot, args.limit, args.output_path, args.cluster_path, args.cpu_only)
+         args.memory_limit, args.device, args.num_fewshot, args.limit, args.output_path, args.cluster_path, args.cpu_only, args.hybrid_split)
 
 
     
