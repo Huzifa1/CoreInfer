@@ -50,7 +50,7 @@ def main(method, task_name, model_name, checkpoint_path, sparsity, start_num, en
     
     model, tokenizer, num_layers = load_model(model_name, start_num, end_num, checkpoint_path, device, memory_limit)
     
-    model = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path, cpu_only, hybrid_split)
+    model = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path, cpu_only, hybrid_split=hybrid_split)
         
     evaluate(task_name, model, tokenizer, num_fewshot, device, limit, output_path, method)
     
