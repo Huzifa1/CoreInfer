@@ -87,6 +87,7 @@ if __name__ == '__main__':
     parser.add_argument('--cluster_path', type=str, default=None, help='Optional cluster path.')
     parser.add_argument('--output_path', type=Path, default=None, help='Path to output file.')
     parser.add_argument('--cpu_only', action='store_true', help='Run inference on CPU only.')
+    parser.add_argument('--hybrid_split', type=float, default=0.5, help='Amout of model neurons')
 
     args = parser.parse_args()
 
