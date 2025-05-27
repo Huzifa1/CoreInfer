@@ -85,10 +85,10 @@ def load_model_neurons_tensor(model_neurons_path):
     with open(model_neurons_path, 'r') as f:
         data = json.load(f)
         
-    if "model_neurons" not in data:
-        raise RuntimeError(f"File {model_neurons_path} does not have property 'model_neurons'")
+    if "neurons" not in data:
+        raise RuntimeError(f"File {model_neurons_path} does not have property 'neurons'")
 
-    return torch.tensor(data["model_neurons"])
+    return torch.tensor(data["neurons"])
 
 def convert_llama_model_hybrid_neurons(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, hybrid_split, model_neurons_path):
     global model_neurons

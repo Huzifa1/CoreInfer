@@ -27,8 +27,8 @@ class CustomMLPLayer(nn.Module):
         if neuron_num > loaded_neuron_num:
             raise RuntimeError(f"Number of required neurons ({neuron_num}) is larger than the number of loaded neurons ({loaded_neuron_num})")
         
-        if variables.model_neurons_percent > sparsity:
-            raise RuntimeError(f"model_neurons_percent ({variables.model_neurons_percent}) is larger than sparsity ({sparsity}).")
+        if variables.base_neurons_percent > sparsity:
+            raise RuntimeError(f"base_neurons_percent ({variables.base_neurons_percent}) is larger than sparsity ({sparsity}).")
 
         self.weight = weight.clone().to(device)
         self.num = num
@@ -55,24 +55,24 @@ class CustomMLPLayer(nn.Module):
             if "down" in self.name:
                 squeezed_x = x.clone().squeeze()
 
-                # Get model neurons
-                # This works since when loading, model neurons are sorted at the beginning
-                model_neuron_num = int(variables.model_neurons_percent * self.original_neurons_num)
-                model_neurons_to_compute = torch.arange(0, model_neuron_num)
+                # Get base neurons
+                # This works since when loading, base neurons are sorted at the beginning
+                base_neuron_num = int(variables.base_neurons_percent * self.original_neurons_num)
+                base_neurons = torch.arange(0, base_neuron_num)
                 
-                if variables.model_neurons_percent < self.sparsity:
+                if variables.base_neurons_percent < self.sparsity:
                     # Now fill up with core neurons
                     core_neurons = common.get_core_neurons(squeezed_x, self.token_sparsity, 1, self.weight.size(1))
                 
                     # Now remove the overlap
-                    mask = ~torch.isin(core_neurons, model_neurons_to_compute)
+                    mask = ~torch.isin(core_neurons, base_neurons)
                     unique_core_neurons = core_neurons[mask]
                     
                     # Now get the rest of neurons to load from unique_core_neurons
-                    unique_core_neurons_to_compute = unique_core_neurons[:int((self.sparsity - variables.model_neurons_percent) * self.original_neurons_num)]      
-                    indices_all = torch.cat((model_neurons_to_compute, unique_core_neurons_to_compute))
+                    unique_core_neurons_to_compute = unique_core_neurons[:int((self.sparsity - variables.base_neurons_percent) * self.original_neurons_num)]      
+                    indices_all = torch.cat((base_neurons, unique_core_neurons_to_compute))
                 else:
-                    indices_all = model_neurons_to_compute
+                    indices_all = base_neurons
               
                             
                 if self.memory_limit:

@@ -1,1 +1,1 @@
-MASK_FILEPATH = "/local/huzaifa/CoreInfer/scores/truthfulqa_gen/masks/test.pkl"
+MASK_FILEPATH = "neurons/truthfulqa.pkl"
