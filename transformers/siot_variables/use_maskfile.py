@@ -1,1 +1,0 @@
-USE_MASKFILE = False

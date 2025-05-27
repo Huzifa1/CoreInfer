@@ -4,6 +4,7 @@ import gc
 import torch
 from tqdm import tqdm
 import common
+import json
 
 indices_list_all = []
 
@@ -80,19 +81,18 @@ class CustomMLPLayer(nn.Module):
             true_value = x @ self.filtered_W.T
         return true_value
 
-def load_model_neurons_tensor():
-    file = "/local/artemb/CoreInfer/convert/model_neurons_llama3.txt"
-    with open(file, "r") as f:
-        lines = f.readlines()
-        data = [list(map(int, line.strip().strip("[]").split(","))) for line in lines]
+def load_model_neurons_tensor(model_neurons_path):
+    with open(model_neurons_path, 'r') as f:
+        data = json.load(f)
+        
+    if "model_neurons" not in data:
+        raise RuntimeError(f"File {model_neurons_path} does not have property 'model_neurons'")
 
-    max_len = max(len(row) for row in data)
-    padded = [row + [-1]*(max_len - len(row)) for row in data]
-    return torch.tensor(padded, dtype=torch.long).contiguous()
+    return torch.tensor(data["model_neurons"])
 
-def convert_llama_model_hybrid_neurons(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, hybrid_split):
+def convert_llama_model_hybrid_neurons(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, hybrid_split, model_neurons_path):
     global model_neurons
-    model_neurons = load_model_neurons_tensor()
+    model_neurons = load_model_neurons_tensor(model_neurons_path)
     c = 0
     for name, module in tqdm(model.named_modules(), desc="Convert Llama Models"):
         c += 1

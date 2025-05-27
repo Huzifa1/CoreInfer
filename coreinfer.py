@@ -114,10 +114,10 @@ def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_t
 
 
 
-def main(method, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, prompt, memory_limit, num_fewshot, task_type, num_tokens_to_generate, device, sampling_method, cluster_path = None, cpu_only = False, top_p = None, sparsity_levels_path = None, hybrid_split = None):
+def main(method, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, prompt, memory_limit, num_fewshot, task_type, num_tokens_to_generate, device, sampling_method, cluster_path = None, cpu_only = False, top_p = None, sparsity_levels_path = None, hybrid_split = None, model_neurons_path = None):
     model, tokenizer, num_layers = load_model(model_name, start_num, end_num, checkpoint_path, device, memory_limit)
     
-    model = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path, cpu_only, sparsity_levels_path, hybrid_split)
+    model = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path, cpu_only, sparsity_levels_path, hybrid_split, model_neurons_path)
 
     generate(method, model, tokenizer, prompt, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p)
 
@@ -147,6 +147,7 @@ if __name__ == '__main__':
     parser.add_argument('--cpu_only', action='store_true', help='Run inference on CPU only.')
     parser.add_argument('--sparsity_levels_path', type=Path, default=None, help='Path to sparsity levels file.')
     parser.add_argument('--hybrid_split', type=float, default=0.5, help='Amout of model neurons')
+    parser.add_argument('--model_neurons_path', type=Path, default=None, help='Path to model neurons file')
 
 
     args = parser.parse_args()
@@ -158,6 +159,9 @@ if __name__ == '__main__':
   
     if args.method == 'sparsity_levels' and args.sparsity_levels_path is None:
         parser.error("The option --sparsity_levels_path is required when using the sparsity_levels method.")
+        
+    if (args.method == "model_neurons" or args.method == "hybrid_neurons") and args.model_neurons_path is None:
+        parser.error(f"The option --model_neurons_path is required when using the {args.method} method.")
 
     main(args.method, args.model_name, args.checkpoint_path, args.sparsity, args.start_num, args.end_num, args.token_sparsity, args.prompt, args.memory_limit,
-        args.num_fewshot, args.task_type, args.num_tokens_to_generate, args.device, args.sampling_method, args.cluster_path, args.cpu_only, args.top_p, args.sparsity_levels_path, args.hybrid_split)
+        args.num_fewshot, args.task_type, args.num_tokens_to_generate, args.device, args.sampling_method, args.cluster_path, args.cpu_only, args.top_p, args.sparsity_levels_path, args.hybrid_split, args.model_neurons_path)

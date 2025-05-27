@@ -7,8 +7,9 @@ from utils import *
 from common import *
 import json
 from scores.neuron_score_writer import write_neuron_scores
-from transformers.siot import USE_SIOT_IMPROVEMENTS, MASK_FILEPATH, USE_MASKFILE
+from transformers.siot import USE_SIOT_IMPROVEMENTS, MASK_FILEPATH
 from convert.convert_llama_model_score import SPARSITY_LEVELS
+import create_neurons_mask
 
 default_device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -35,7 +36,7 @@ def evaluate(task_name, model, tokenizer, num_fewshot, device, limit, output_pat
     
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     result_dict = results['results']
-    if (USE_SIOT_IMPROVEMENTS and USE_MASKFILE):
+    if (USE_SIOT_IMPROVEMENTS):
         result_dict["mask_name"] = MASK_FILEPATH
     command_str = f"Command: {' '.join(sys.argv)}"
     result_dict['command'] = command_str
@@ -44,13 +45,14 @@ def evaluate(task_name, model, tokenizer, num_fewshot, device, limit, output_pat
 
 
 
-def main(method, task_name, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, memory_limit, device, num_fewshot, limit, output_path, cluster_path = None, cpu_only = None, hybrid_split = None):    
-    if (USE_SIOT_IMPROVEMENTS and USE_MASKFILE):
+def main(method, task_name, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, memory_limit, device, num_fewshot, limit, output_path, cluster_path = None, cpu_only = None, hybrid_split = None, model_neurons_path = None):    
+    if (USE_SIOT_IMPROVEMENTS):
+        create_neurons_mask.main()
         print(f"SIOT: Use Mask for partial loading, mask file: {MASK_FILEPATH}")
     
     model, tokenizer, num_layers = load_model(model_name, start_num, end_num, checkpoint_path, device, memory_limit)
     
-    model = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path, cpu_only, hybrid_split=hybrid_split)
+    model = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path, cpu_only, hybrid_split=hybrid_split, model_neurons_path=model_neurons_path)
         
     evaluate(task_name, model, tokenizer, num_fewshot, device, limit, output_path, method)
     
@@ -88,6 +90,8 @@ if __name__ == '__main__':
     parser.add_argument('--output_path', type=Path, default=None, help='Path to output file.')
     parser.add_argument('--cpu_only', action='store_true', help='Run inference on CPU only.')
     parser.add_argument('--hybrid_split', type=float, default=0.5, help='Amout of model neurons')
+    parser.add_argument('--model_neurons_path', type=Path, default=None, help='Path to model neurons file')
+
 
     args = parser.parse_args()
 
@@ -101,10 +105,14 @@ if __name__ == '__main__':
     if (args.output_path == None):
         timestr = time.strftime("%Y_%m_%d_%H_%M")
         args.output_path = f"results/dataset_run_{timestr}_{args.task_name}_{args.method}.json"
+        
+    if (args.method == "model_neurons" or args.method == "hybrid_neurons") and args.model_neurons_path is None:
+        parser.error(f"The option --model_neurons_path is required when using the {args.method} method.")
+        
     print(f"Use filename {args.output_path}\n")
     
     main(args.method, args.task_name, args.model_name, args.checkpoint_path, args.sparsity, args.start_num, args.end_num, args.token_sparsity,
-         args.memory_limit, args.device, args.num_fewshot, args.limit, args.output_path, args.cluster_path, args.cpu_only, args.hybrid_split)
+         args.memory_limit, args.device, args.num_fewshot, args.limit, args.output_path, args.cluster_path, args.cpu_only, args.hybrid_split, args.model_neurons_path)
 
 
     

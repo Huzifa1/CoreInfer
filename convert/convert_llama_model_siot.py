@@ -5,26 +5,30 @@ import torch
 from tqdm import tqdm
 import common
 import pickle
-from transformers.siot_variables.variables import percentage_overall_to_compute, first_layer, last_layer, percentage_to_always_compute, percentage_to_load
-from transformers.siot_variables.use_maskfile import USE_MASKFILE
 from transformers.siot_variables.siot_improvements import USE_SIOT_IMPROVEMENTS
+import transformers.siot_variables.variables as variables
+
 indices_list_all = []
 
 class CustomMLPLayer(nn.Module):
-    def __init__(self, weight, num, sparsity, start_num, token_sparsity, memory_limit, cpu_only, name):
+    def __init__(self, weight, num, sparsity, start_num, token_sparsity, memory_limit, cpu_only, name, original_neurons_num):
         super(CustomMLPLayer, self).__init__()
         
         device = torch.device("cpu") if memory_limit or cpu_only else torch.device("cuda")
         
+        neuron_num = round(original_neurons_num * sparsity)
         if "down" in name:
-            neuron_num = int(weight.size(1) * sparsity)
-            self.filtered_W = torch.zeros((weight.size(0),neuron_num)).to(torch.float16).to(device)
             loaded_neuron_num = weight.size(1)
+            self.filtered_W = torch.zeros((weight.size(0),neuron_num)).to(torch.float16).to(device)
         else:
-            neuron_num = int(weight.size(0) * sparsity)
             self.filtered_W = torch.zeros((neuron_num, weight.size(1))).to(torch.float16).to(device)
             loaded_neuron_num = weight.size(0)
 
+        if neuron_num > loaded_neuron_num:
+            raise RuntimeError(f"Number of required neurons ({neuron_num}) is larger than the number of loaded neurons ({loaded_neuron_num})")
+        
+        if variables.model_neurons_percent > sparsity:
+            raise RuntimeError(f"model_neurons_percent ({variables.model_neurons_percent}) is larger than sparsity ({sparsity}).")
 
         self.weight = weight.clone().to(device)
         self.num = num
@@ -35,8 +39,7 @@ class CustomMLPLayer(nn.Module):
         self.start_num = start_num
         self.neuron_num = neuron_num
         self.memory_limit = memory_limit
-        
-        self.activation_ratio = 0.0
+        self.original_neurons_num = original_neurons_num        
         self.loaded_neuron_num = loaded_neuron_num
         
 
@@ -51,25 +54,27 @@ class CustomMLPLayer(nn.Module):
 
             if "down" in self.name:
                 squeezed_x = x.clone().squeeze()
-                neurons_always_to_compute = self.get_neurons_always_to_compute_from_layer(self.num)
+
+                # Get model neurons
+                # This works since when loading, model neurons are sorted at the beginning
+                model_neuron_num = int(variables.model_neurons_percent * self.original_neurons_num)
+                model_neurons_to_compute = torch.arange(0, model_neuron_num)
                 
-                sparsity_stepsize = 0.01
-                percentage_overall_to_compute_is_reached = False
-                core_neuron_sparsity = (percentage_overall_to_compute - percentage_to_always_compute) / percentage_to_load
-                while not percentage_overall_to_compute_is_reached:
-                    core_neurons = common.get_core_neurons(squeezed_x, self.token_sparsity, core_neuron_sparsity, self.weight.size(1))
-                    neurons_to_compute = list(set(neurons_always_to_compute + core_neurons.tolist()))
-                    model_neuron_num = int(self.loaded_neuron_num / percentage_to_load)
-                    percentage_to_compute = len(neurons_to_compute) / model_neuron_num
-                    percentage_overall_to_compute_is_reached = percentage_to_compute >= percentage_overall_to_compute
-                    core_neuron_sparsity += sparsity_stepsize
-                    if(core_neuron_sparsity >= 1):
-                        break
+                if variables.model_neurons_percent < self.sparsity:
+                    # Now fill up with core neurons
+                    core_neurons = common.get_core_neurons(squeezed_x, self.token_sparsity, 1, self.weight.size(1))
                 
-                indices_all = neurons_to_compute
-                number_of_neurons = squeezed_x.shape[1]
-                self.activation_ratio = len(indices_all) / number_of_neurons
-                
+                    # Now remove the overlap
+                    mask = ~torch.isin(core_neurons, model_neurons_to_compute)
+                    unique_core_neurons = core_neurons[mask]
+                    
+                    # Now get the rest of neurons to load from unique_core_neurons
+                    unique_core_neurons_to_compute = unique_core_neurons[:int((self.sparsity - variables.model_neurons_percent) * self.original_neurons_num)]      
+                    indices_all = torch.cat((model_neurons_to_compute, unique_core_neurons_to_compute))
+                else:
+                    indices_all = model_neurons_to_compute
+              
+                            
                 if self.memory_limit:
                     self.weight = self.weight.cpu()
                     self.filtered_W = torch.zeros_like(self.weight).cuda().to(torch.float16)
@@ -86,8 +91,6 @@ class CustomMLPLayer(nn.Module):
             if "down" not in self.name:
                 if not self.weight_updated:
                     indices = indices_list_all[self.num - (self.start_num + 1)]
-                    number_of_neurons = self.weight.shape[0]
-                    self.activation_ratio = len(indices) / number_of_neurons
                     self.filtered_W = self.weight[indices,:].clone().to(device)
                     if self.memory_limit:
                         self.weight = self.weight.cpu()
@@ -97,25 +100,9 @@ class CustomMLPLayer(nn.Module):
             
         return true_value
 
-    def get_neurons_always_to_compute_from_layer(self, layer_id: int) -> list[int]:
-        current_neurons_always_to_compute_filepath = "neurons/current_neurons_always_to_compute.txt"
-        file = open(current_neurons_always_to_compute_filepath, "r")
-        lines = file.readlines()
-        for line in lines:
-            start_of_line = line[:3]
-            if (f"{layer_id}:" in start_of_line):
-                line_content = line[3:]
-                neurons_always_to_compute = [int(element) for element in line_content.split(",")]
-                break
-        return neurons_always_to_compute
 
-def convert_llama_model_siot(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only):
-    start_num = first_layer - 1
-    end_num = last_layer + 1
-    sparsity = percentage_overall_to_compute
+def convert_llama_model_siot(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, original_neurons_num):
     
-    if USE_MASKFILE:
-        raise RuntimeError("Usage of Filemask needs to be deactivated when using siot Method")
     if not USE_SIOT_IMPROVEMENTS:
         raise RuntimeError("SIOT Improvements / partial loading needs to be activated for siot Method")
     
@@ -131,7 +118,7 @@ def convert_llama_model_siot(model, sparsity, start_num, end_num, token_sparsity
                 else:
                     parent = model # for lm_head
                 
-                NewLayer = CustomMLPLayer(module.weight, num, sparsity, start_num, token_sparsity, memory_limit, cpu_only, name)
+                NewLayer = CustomMLPLayer(module.weight, num, sparsity, start_num, token_sparsity, memory_limit, cpu_only, name, original_neurons_num)
                 setattr(parent, attr_name, NewLayer)
                 del module
                 custom_layers.append(NewLayer)

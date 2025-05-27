@@ -4,6 +4,7 @@ import gc
 import torch
 from tqdm import tqdm
 import common
+import json
 
 indices_list_all = []
 
@@ -31,33 +32,6 @@ class CustomMLPLayer(nn.Module):
         self.neuron_num = neuron_num
         self.memory_limit = memory_limit
         self.model_neurons = model_neurons
-        #self.adjust_neurons()
-
-    def adjust_neurons(self):
-        device = torch.device("cpu") if self.cpu_only else torch.device("cuda")
-        global indices_list_all
-        indices_all = common.get_model_neurons(self.sparsity, model_neurons, self.weight.size(1), self.num)
-        self.weight_updated = False
-
-        if "down" in self.name:
-            if self.memory_limit:
-                self.weight = self.weight.cpu()
-                self.filtered_W = torch.zeros_like(self.weight).cuda().to(torch.float16)
-
-            self.filtered_W = self.weight[:, indices_all].clone().to(device)
-            
-            if self.num == (self.start_num + 1):
-                indices_list_all=[]
-                
-            indices_list_all.append(indices_all)
-
-            self.weight = self.weight.cpu()
-        else:
-            if not self.weight_updated:
-                self.filtered_W = self.weight[indices_all,:].clone().to(device)
-                if self.memory_limit:
-                    self.weight = self.weight.cpu()
-                self.weight_updated = True
 
     def forward(self, x):
         device = torch.device("cpu") if self.cpu_only else torch.device("cuda")
@@ -68,8 +42,7 @@ class CustomMLPLayer(nn.Module):
             true_value = x @ self.weight.T.to(device)
 
             if "down" in self.name:
-                squeezed_x = x.clone().squeeze()
-                indices_all = common.get_model_neurons(self.sparsity, model_neurons, self.weight.size(1), self.num)
+                indices_all = common.get_model_neurons(self.sparsity, self.model_neurons, self.weight.size(1), self.num)
 
                 if self.memory_limit:
                     self.weight = self.weight.cpu()
@@ -95,19 +68,18 @@ class CustomMLPLayer(nn.Module):
             true_value = x @ self.filtered_W.T
         return true_value
 
-def load_model_neurons_tensor():
-    file = "/local/artemb/CoreInfer/convert/model_neurons_llama3.txt"
-    with open(file, "r") as f:
-        lines = f.readlines()
-        data = [list(map(int, line.strip().strip("[]").split(","))) for line in lines]
+def load_model_neurons_tensor(model_neurons_path):
+    with open(model_neurons_path, 'r') as f:
+        data = json.load(f)
+        
+    if "model_neurons" not in data:
+        raise RuntimeError(f"File {model_neurons_path} does not have property 'model_neurons'")
 
-    max_len = max(len(row) for row in data)
-    padded = [row + [-1]*(max_len - len(row)) for row in data]
-    return torch.tensor(padded, dtype=torch.long).contiguous()
+    return torch.tensor(data["model_neurons"])
 
-def convert_llama_model_model_neurons(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only):
+def convert_llama_model_model_neurons(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, model_neurons_path):
     global model_neurons
-    model_neurons = load_model_neurons_tensor()
+    model_neurons = load_model_neurons_tensor(model_neurons_path)
     c = 0
     for name, module in tqdm(model.named_modules(), desc="Convert Llama Models"):
         c += 1

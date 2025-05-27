@@ -173,6 +173,24 @@ def process_data(dataset, dataset_name):
         candidates_text = [f"A: {x[0]}\nB: {x[1]}\nC: {x[2]}" for x in dataset["test"]["candidates"]]
         process_data = ['Question: ' + a + '\n' + b + '\nAnswer: ' + c for a, b, c in zip(question, candidates_text, answers)]
         
+    elif dataset_name == "lambada":
+        texts = dataset["validation"]["text"]
+        process_data = ['Context: ' +' '.join(x.split(' ')[:-1]) + '\nPredicted word: ' + x.split(' ')[-1] for x in texts]
+        
+    elif dataset_name == "careqa_open":
+        question = dataset['test']['question']
+        answer = dataset['test']['answer']
+        process_data = ['Question: ' + a + '\nAnswer: ' + b for a, b in zip(question, answer)]
+        
+    elif dataset_name == "medtext":
+        question = dataset['train']['Prompt']
+        answer = dataset['train']['Completion']
+        process_data = ['Question: ' + a + '\nAnswer: ' + b for a, b in zip(question, answer)]
+        
+    elif dataset_name == "meqsum":
+        text = dataset['train']['CHQ']
+        summary = dataset['train']['Summary']
+        process_data = ['Text: ' + a + '\nSummary: ' + b for a, b in zip(text, summary)]
             
     return process_data
 
