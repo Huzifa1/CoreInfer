@@ -4,6 +4,8 @@ from pathlib import Path
 from utils import *
 from common import *
 from torch.nn.functional import softmax
+from transformers.siot import USE_SIOT_IMPROVEMENTS, MASK_FILEPATH
+import create_neurons_mask
 
 default_device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -115,6 +117,10 @@ def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_t
 
 
 def main(method, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, prompt, memory_limit, num_fewshot, task_type, num_tokens_to_generate, device, sampling_method, cluster_path = None, cpu_only = False, top_p = None, sparsity_levels_path = None, hybrid_split = None, model_neurons_path = None):
+    if (USE_SIOT_IMPROVEMENTS):
+        create_neurons_mask.main()
+        print(f"SIOT: Use Mask for partial loading, mask file: {MASK_FILEPATH}")
+    
     model, tokenizer, num_layers = load_model(model_name, start_num, end_num, checkpoint_path, device, memory_limit)
     
     model = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path, cpu_only, sparsity_levels_path, hybrid_split, model_neurons_path)
