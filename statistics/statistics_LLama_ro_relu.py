@@ -20,24 +20,20 @@ tokenCount = 0
 neuron_activation_sums = {}
 
 # === Hook function to directly count neuron activations (no storing tensors) ===
-def get_activation_hook(layer_id, act_fn, gate_proj, up_proj):
+def get_activation_hook(layer_id):
     def hook(module, input, output):
         x = input[0]
-        activation_output = act_fn(up_proj(x)) * gate_proj(x)
-        batch, seq_len, hidden_dim = activation_output.shape
+        batch, seq_len, hidden_dim = x.shape
 
         if layer_id not in neuron_activation_sums:
             neuron_activation_sums[layer_id] = torch.zeros(hidden_dim, dtype=torch.float32)
         
-        neuron_activation_sums[layer_id] += activation_output.view(-1, hidden_dim).abs().sum(dim=0).cpu()
+        neuron_activation_sums[layer_id] += x.view(-1, hidden_dim).abs().sum(dim=0).cpu()
     return hook
 
 # === Register hooks ONCE globally ===
 for i, layer in enumerate(model.model.layers):
-    act_fn = layer.mlp.act_fn
-    gate_proj = layer.mlp.gate_proj
-    up_proj = layer.mlp.up_proj
-    layer.mlp.register_forward_hook(get_activation_hook(f"layer_{i}_mlp_up_proj", act_fn, gate_proj, up_proj))
+    layer.mlp.down_proj.register_forward_hook(get_activation_hook(f"layer_{i}_mlp_down_proj"))
 
 # === Count how many prompts were already processed ===
 processed_count = 0
