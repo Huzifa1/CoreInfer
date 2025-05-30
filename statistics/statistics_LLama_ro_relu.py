@@ -9,6 +9,8 @@ max_new_tokens = 30
 output_file = "non_relu.statistics"
 dataset_file = "dataset.txt"
 prompt_limit = 30000  # Limit how many prompts to process
+do_sample = True  # Set to True if you want to sample instead of greedy generation
+decoding_stage = False
 
 # === Load model and tokenizer ===
 tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
@@ -32,8 +34,10 @@ def get_activation_hook(layer_id):
     return hook
 
 # === Register hooks ONCE globally ===
-for i, layer in enumerate(model.model.layers):
-    layer.mlp.down_proj.register_forward_hook(get_activation_hook(f"layer_{i}_mlp_down_proj"))
+hooks = []
+if decoding_stage:
+    for i, layer in enumerate(model.model.layers):
+        layer.mlp.down_proj.register_forward_hook(get_activation_hook(f"layer_{i}_mlp_down_proj"))
 
 # === Count how many prompts were already processed ===
 processed_count = 0
@@ -50,18 +54,27 @@ def process_prompt(prompt):
     global tokenCount
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
     tokenCountInput = inputs["input_ids"].shape[-1]
-    with torch.no_grad():
-        generated = model.generate(
-            **inputs,
-            max_new_tokens=max_new_tokens,
-            temperature=0.7,
-            top_k=50,
-            do_sample=True
-        )
-        tokenCountOutput = generated.shape[-1] - tokenCountInput
-        text_out = tokenizer.decode(generated[0], skip_special_tokens=True)
-        #print(f"[GEN] {text_out}")
-        tokenCount += tokenCountInput + tokenCountOutput
+    if decoding_stage:
+        with torch.no_grad():
+            generated = model.generate(
+                **inputs,
+                max_new_tokens=max_new_tokens,
+                temperature=0.7,
+                top_k=50,
+                do_sample=do_sample
+            )
+            tokenCountOutput = generated.shape[-1] - tokenCountInput
+            text_out = tokenizer.decode(generated[0], skip_special_tokens=True)
+    else:
+        with torch.no_grad():
+            for i, layer in enumerate(model.model.layers):
+                hook = layer.mlp.down_proj.register_forward_hook(get_activation_hook(f"layer_{i}_mlp_down_proj"))
+                hooks.append(hook)
+            tokenCountOutput = 0
+            model(**inputs)
+            for hook in hooks:
+                hook.remove()
+    tokenCount += tokenCountInput + tokenCountOutput
     return prompt
 
 # === Process dataset file, prompt-by-prompt ===
