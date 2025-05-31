@@ -32,13 +32,15 @@ run()
 
 
 for TASK_NAME in "truthfulqa_gen" "triviaqa" "wmt16-de-en" "squadv2"; do
+    DATASET_NEURONS_FILEPATH="neurons/${$TASK_NAME}_dataset_neurons.json"
     # Make sure to include the variable you are tuning in the filename, so that files don't overlap
     # All information are included in the evaluation result file.
     # If you want to tune another variable, I suggest to use a different directory (EDIT $OUT_DIR)
 
     # For example, if you are tuning BASE_NEURON_PERCENT:
-    DATASET_NEURONS_FILEPATH="neurons/${$TASK_NAME}_dataset_neurons.json"
-    FILE_NAME="${BASE_NEURONS_TYPE}.json"
-    run
+    for BASE_NEURON_PERCENT in 0.1 0.2 0.3 0.4; do
+        FILE_NAME="${BASE_NEURON_PERCENT}.json"
+        run
+    done
 done
 
