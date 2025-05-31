@@ -85,7 +85,7 @@ def load_model(model_name, start_num, end_num, checkpoint_path, device, memory_l
     print(f"Done. Loaded model in {elapsed_time:.2f} seconds.\n")
     return model, tokenizer, num_layers
 
-def convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path=None, cpu_only = False, sparsity_levels_path=None, hybrid_split = None, model_neurons_path = None):
+def convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, siot_method_config, cluster_path=None, cpu_only = False, sparsity_levels_path=None, hybrid_split = None, model_neurons_filepath = None):
     start_time = time.time()
 
     if "opt" in model_name:
@@ -116,11 +116,11 @@ def convert_model(method, model, model_name, num_layers, sparsity, start_num, en
         elif method == 'score':
             model = convert_llama_model_score(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
         elif method == 'siot':
-            model = convert_llama_model_siot(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, MODEL_INFO[model_name]["num_neurons"])
+            model = convert_llama_model_siot(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, MODEL_INFO[model_name]["num_neurons"], siot_method_config)
         elif method == 'model_neurons':
-            model = convert_llama_model_model_neurons(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, model_neurons_path)
+            model = convert_llama_model_model_neurons(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, model_neurons_filepath)
         elif method == 'hybrid_neurons':
-            model = convert_llama_model_hybrid_neurons(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, hybrid_split, model_neurons_path)
+            model = convert_llama_model_hybrid_neurons(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, hybrid_split, model_neurons_filepath)
      
     print(f"Converting model {model_name} using method {method}...")
     end_time = time.time()

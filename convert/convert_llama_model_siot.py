@@ -6,12 +6,11 @@ from tqdm import tqdm
 import common
 import pickle
 from transformers.siot_variables.siot_improvements import USE_SIOT_IMPROVEMENTS
-import transformers.siot_variables.variables as variables
 
 indices_list_all = []
 
 class CustomMLPLayer(nn.Module):
-    def __init__(self, weight, num, sparsity, start_num, token_sparsity, memory_limit, cpu_only, name, original_neurons_num):
+    def __init__(self, weight, num, sparsity, start_num, token_sparsity, memory_limit, cpu_only, name, original_neurons_num, siot_method_config):
         super(CustomMLPLayer, self).__init__()
         
         device = torch.device("cpu") if memory_limit or cpu_only else torch.device("cuda")
@@ -27,8 +26,9 @@ class CustomMLPLayer(nn.Module):
         if neuron_num > loaded_neuron_num:
             raise RuntimeError(f"Number of required neurons ({neuron_num}) is larger than the number of loaded neurons ({loaded_neuron_num})")
         
-        if variables.base_neurons_percent > sparsity:
-            raise RuntimeError(f"base_neurons_percent ({variables.base_neurons_percent}) is larger than sparsity ({sparsity}).")
+        if siot_method_config["base_neurons_percent"] > sparsity:
+            p = siot_method_config["base_neurons_percent"]
+            raise RuntimeError(f"base_neurons_percent ({p}) is larger than sparsity ({sparsity}).")
 
         self.weight = weight.clone().to(device)
         self.num = num
@@ -41,7 +41,7 @@ class CustomMLPLayer(nn.Module):
         self.memory_limit = memory_limit
         self.original_neurons_num = original_neurons_num        
         self.loaded_neuron_num = loaded_neuron_num
-        
+        self.base_neurons_percent = siot_method_config["base_neurons_percent"]
 
 
     def forward(self, x):
@@ -57,10 +57,10 @@ class CustomMLPLayer(nn.Module):
 
                 # Get base neurons
                 # This works since when loading, base neurons are sorted at the beginning
-                base_neuron_num = int(variables.base_neurons_percent * self.original_neurons_num)
+                base_neuron_num = int(self.base_neurons_percent * self.original_neurons_num)
                 base_neurons = torch.arange(0, base_neuron_num)
                 
-                if variables.base_neurons_percent < self.sparsity:
+                if self.base_neurons_percent < self.sparsity:
                     # Now fill up with core neurons
                     core_neurons = common.get_core_neurons(squeezed_x, self.token_sparsity, 1, self.weight.size(1))
                 
@@ -69,7 +69,7 @@ class CustomMLPLayer(nn.Module):
                     unique_core_neurons = core_neurons[mask]
                     
                     # Now get the rest of neurons to load from unique_core_neurons
-                    unique_core_neurons_to_compute = unique_core_neurons[:int((self.sparsity - variables.base_neurons_percent) * self.original_neurons_num)]      
+                    unique_core_neurons_to_compute = unique_core_neurons[:int((self.sparsity - self.base_neurons_percent) * self.original_neurons_num)]      
                     indices_all = torch.cat((base_neurons, unique_core_neurons_to_compute))
                 else:
                     indices_all = base_neurons
@@ -101,7 +101,7 @@ class CustomMLPLayer(nn.Module):
         return true_value
 
 
-def convert_llama_model_siot(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, original_neurons_num):
+def convert_llama_model_siot(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, original_neurons_num, siot_method_config):
     
     if not USE_SIOT_IMPROVEMENTS:
         raise RuntimeError("SIOT Improvements / partial loading needs to be activated for siot Method")
@@ -118,7 +118,7 @@ def convert_llama_model_siot(model, sparsity, start_num, end_num, token_sparsity
                 else:
                     parent = model # for lm_head
                 
-                NewLayer = CustomMLPLayer(module.weight, num, sparsity, start_num, token_sparsity, memory_limit, cpu_only, name, original_neurons_num)
+                NewLayer = CustomMLPLayer(module.weight, num, sparsity, start_num, token_sparsity, memory_limit, cpu_only, name, original_neurons_num, siot_method_config)
                 setattr(parent, attr_name, NewLayer)
                 del module
                 custom_layers.append(NewLayer)

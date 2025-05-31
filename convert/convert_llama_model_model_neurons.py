@@ -68,18 +68,18 @@ class CustomMLPLayer(nn.Module):
             true_value = x @ self.filtered_W.T
         return true_value
 
-def load_model_neurons_tensor(model_neurons_path):
-    with open(model_neurons_path, 'r') as f:
+def load_model_neurons_tensor(model_neurons_filepath):
+    with open(model_neurons_filepath, 'r') as f:
         data = json.load(f)
         
     if "neurons" not in data:
-        raise RuntimeError(f"File {model_neurons_path} does not have property 'neurons'")
+        raise RuntimeError(f"File {model_neurons_filepath} does not have property 'neurons'")
 
     return torch.tensor(data["neurons"])
 
-def convert_llama_model_model_neurons(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, model_neurons_path):
+def convert_llama_model_model_neurons(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, model_neurons_filepath):
     global model_neurons
-    model_neurons = load_model_neurons_tensor(model_neurons_path)
+    model_neurons = load_model_neurons_tensor(model_neurons_filepath)
     c = 0
     for name, module in tqdm(model.named_modules(), desc="Convert Llama Models"):
         c += 1

@@ -116,14 +116,15 @@ def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_t
 
 
 
-def main(method, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, prompt, memory_limit, num_fewshot, task_type, num_tokens_to_generate, device, sampling_method, cluster_path = None, cpu_only = False, top_p = None, sparsity_levels_path = None, hybrid_split = None, model_neurons_path = None):
-    if (USE_SIOT_IMPROVEMENTS):
-        create_neurons_mask.main()
-        print(f"SIOT: Use Mask for partial loading, mask file: {MASK_FILEPATH}")
+def main(method, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, prompt, memory_limit, num_fewshot, task_type, num_tokens_to_generate, device, sampling_method, siot_method_config, cluster_path = None, cpu_only = False, top_p = None, sparsity_levels_path = None, hybrid_split = None, model_neurons_filepath = None):
+    
+    if (USE_SIOT_IMPROVEMENTS and method == "siot"):
+        create_neurons_mask.main(start_num, end_num, siot_method_config)
+        print(f"SIOT: Use Mask for partial loading, mask file: {MASK_FILEPATH}") 
     
     model, tokenizer, num_layers = load_model(model_name, start_num, end_num, checkpoint_path, device, memory_limit)
     
-    model = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path, cpu_only, sparsity_levels_path, hybrid_split, model_neurons_path)
+    model = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, siot_method_config, cluster_path, cpu_only, sparsity_levels_path, hybrid_split, model_neurons_filepath)
 
     generate(method, model, tokenizer, prompt, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p)
 
@@ -153,7 +154,14 @@ if __name__ == '__main__':
     parser.add_argument('--cpu_only', action='store_true', help='Run inference on CPU only.')
     parser.add_argument('--sparsity_levels_path', type=Path, default=None, help='Path to sparsity levels file.')
     parser.add_argument('--hybrid_split', type=float, default=0.5, help='Amout of model neurons')
-    parser.add_argument('--model_neurons_path', type=Path, default=None, help='Path to model neurons file')
+    
+    ## SIOT Method arguments
+    parser.add_argument('--base_neurons_percent', type=float, default=0.4, help='Loaded Base Neurons Percent')
+    parser.add_argument('--base_neurons_type', type=str, choices=['model', 'dataset'], default='model', help='Base Neurons Type')
+    parser.add_argument('--loaded_neurons_percent', type=float, default=0.7, help='Overall Percent of Loaded Neurons')
+    parser.add_argument('--model_neurons_filepath', type=Path, default="neurons/llama3-3b_model_neurons.json", help='Path to model neurons file')
+    parser.add_argument('--dataset_neurons_filepath', type=Path, default="neurons/truthfulqa_gen_dataset_neurons.json", help='Path to dataset neurons file')
+    parser.add_argument('--mask_filepath', type=Path, default="neurons/mask.pkl", help='Path to output mask file')
 
 
     args = parser.parse_args()
@@ -166,8 +174,16 @@ if __name__ == '__main__':
     if args.method == 'sparsity_levels' and args.sparsity_levels_path is None:
         parser.error("The option --sparsity_levels_path is required when using the sparsity_levels method.")
         
-    if (args.method == "model_neurons" or args.method == "hybrid_neurons") and args.model_neurons_path is None:
-        parser.error(f"The option --model_neurons_path is required when using the {args.method} method.")
+    if (args.method == "model_neurons" or args.method == "hybrid_neurons") and args.model_neurons_filepath is None:
+        parser.error(f"The option --model_neurons_filepath is required when using the {args.method} method.")
+        
+    siot_method_config = {
+        "base_neurons_percent": args.base_neurons_percent,
+        "base_neurons_type": args.base_neurons_type,
+        "loaded_neurons_percent": args.loaded_neurons_percent,
+        "model_neurons_filepath": args.model_neurons_filepath,
+        "dataset_neurons_filepath": args.dataset_neurons_filepath,
+        "mask_filepath": args.mask_filepath
+    }
 
-    main(args.method, args.model_name, args.checkpoint_path, args.sparsity, args.start_num, args.end_num, args.token_sparsity, args.prompt, args.memory_limit,
-        args.num_fewshot, args.task_type, args.num_tokens_to_generate, args.device, args.sampling_method, args.cluster_path, args.cpu_only, args.top_p, args.sparsity_levels_path, args.hybrid_split, args.model_neurons_path)
+    main(args.method, args.model_name, args.checkpoint_path, args.sparsity, args.start_num, args.end_num, args.token_sparsity, args.prompt, args.memory_limit, args.num_fewshot, args.task_type, args.num_tokens_to_generate, args.device, args.sampling_method, siot_method_config, args.cluster_path, args.cpu_only, args.top_p, args.sparsity_levels_path, args.hybrid_split, args.model_neurons_filepath)

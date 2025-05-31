@@ -22,7 +22,14 @@ from lm_eval.api.registry import ALL_TASKS
 from lm_eval.models.huggingface import HFLM
 from lm_eval import evaluator
 
-def evaluate(task_name, model, tokenizer, num_fewshot, device, limit, output_path, method):
+# To encode Path variables into json files
+class PathEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Path):
+            return str(obj)
+        return super().default(obj)
+
+def evaluate(task_name, model, tokenizer, num_fewshot, limit, output_path, config):
     hflm = HFLM(pretrained=model, tokenizer=tokenizer)
     results = evaluator.simple_evaluate(
         model = hflm,
@@ -38,37 +45,33 @@ def evaluate(task_name, model, tokenizer, num_fewshot, device, limit, output_pat
     result_dict = results['results']
     if (USE_SIOT_IMPROVEMENTS):
         result_dict["mask_name"] = MASK_FILEPATH
+        result_dict["config"] = config
     command_str = f"Command: {' '.join(sys.argv)}"
     result_dict['command'] = command_str
     with open(output_path, 'w') as file:
-        json.dump(result_dict, file)
+        json.dump(result_dict, file, cls=PathEncoder)
 
 
 
-def main(method, task_name, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, memory_limit, device, num_fewshot, limit, output_path, cluster_path = None, cpu_only = None, hybrid_split = None, model_neurons_path = None):    
-    if (USE_SIOT_IMPROVEMENTS):
-        create_neurons_mask.main()
-        print(f"SIOT: Use Mask for partial loading, mask file: {MASK_FILEPATH}")
+def main(method, task_name, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, memory_limit, device, num_fewshot, limit, output_path, siot_method_config, cluster_path = None, cpu_only = None, hybrid_split = None, model_neurons_filepath = None):
+    
+    if (USE_SIOT_IMPROVEMENTS and method == "siot"):
+        create_neurons_mask.main(start_num, end_num, siot_method_config)
+        print(f"SIOT: Use Mask for partial loading, mask file: {MASK_FILEPATH}") 
     
     model, tokenizer, num_layers = load_model(model_name, start_num, end_num, checkpoint_path, device, memory_limit)
     
-    model = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, cluster_path, cpu_only, hybrid_split=hybrid_split, model_neurons_path=model_neurons_path)
+    model = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, siot_method_config, cluster_path, cpu_only, hybrid_split=hybrid_split, model_neurons_filepath=model_neurons_filepath)
         
-    evaluate(task_name, model, tokenizer, num_fewshot, device, limit, output_path, method)
+    config = {
+        "sparsity": sparsity,
+        "start_num": start_num,
+        "end_num": end_num,
+        "token_sparsity": token_sparsity,
+        "siot_method_config": siot_method_config
+    }
+    evaluate(task_name, model, tokenizer, num_fewshot, limit, output_path, config)
     
-    if (method == "score"):
-        num_layers = len(model.custom_layers)
-        num_neurons = model.custom_layers[0].neuron_num
-        for sparsity_level_idx, sparsity_level in enumerate(SPARSITY_LEVELS):
-            scores = torch.zeros([num_layers, num_neurons])
-            for layer_idx, layer in enumerate(model.custom_layers):
-                scores[layer_idx] = layer.neuron_scores_list[sparsity_level_idx]
-            n_prompts = len(model.custom_layers[0].neuron_scores_list)
-            command_str = f"Command: {' '.join(sys.argv)}\n"
-            write_neuron_scores(scores, output_path, command_str, n_prompts, sparsity_level, task_name)
-
-
-
 
 
 if __name__ == '__main__':
@@ -90,7 +93,16 @@ if __name__ == '__main__':
     parser.add_argument('--output_path', type=Path, default=None, help='Path to output file.')
     parser.add_argument('--cpu_only', action='store_true', help='Run inference on CPU only.')
     parser.add_argument('--hybrid_split', type=float, default=0.5, help='Amout of model neurons')
-    parser.add_argument('--model_neurons_path', type=Path, default=None, help='Path to model neurons file')
+    
+    ## SIOT Method arguments
+    parser.add_argument('--base_neurons_percent', type=float, default=0.4, help='Loaded Base Neurons Percent')
+    parser.add_argument('--base_neurons_type', type=str, choices=['model', 'dataset'], default='model', help='Base Neurons Type')
+    parser.add_argument('--loaded_neurons_percent', type=float, default=0.7, help='Overall Percent of Loaded Neurons')
+    parser.add_argument('--model_neurons_filepath', type=Path, default="neurons/llama3-3b_model_neurons.json", help='Path to model neurons file')
+    parser.add_argument('--dataset_neurons_filepath', type=Path, default="neurons/truthfulqa_gen_dataset_neurons.json", help='Path to dataset neurons file')
+    parser.add_argument('--mask_filepath', type=Path, default="neurons/mask.pkl", help='Path to output mask file')
+    
+    
 
 
     args = parser.parse_args()
@@ -106,13 +118,23 @@ if __name__ == '__main__':
         timestr = time.strftime("%Y_%m_%d_%H_%M")
         args.output_path = f"results/dataset_run_{timestr}_{args.task_name}_{args.method}.json"
         
-    if (args.method == "model_neurons" or args.method == "hybrid_neurons") and args.model_neurons_path is None:
-        parser.error(f"The option --model_neurons_path is required when using the {args.method} method.")
+    if (args.method == "model_neurons" or args.method == "hybrid_neurons") and args.model_neurons_filepath is None:
+        parser.error(f"The option --model_neurons_filepath is required when using the {args.method} method.")
         
     print(f"Use filename {args.output_path}\n")
     
+    
+    siot_method_config = {
+        "base_neurons_percent": args.base_neurons_percent,
+        "base_neurons_type": args.base_neurons_type,
+        "loaded_neurons_percent": args.loaded_neurons_percent,
+        "model_neurons_filepath": args.model_neurons_filepath,
+        "dataset_neurons_filepath": args.dataset_neurons_filepath,
+        "mask_filepath": args.mask_filepath
+    }
+    
     main(args.method, args.task_name, args.model_name, args.checkpoint_path, args.sparsity, args.start_num, args.end_num, args.token_sparsity,
-         args.memory_limit, args.device, args.num_fewshot, args.limit, args.output_path, args.cluster_path, args.cpu_only, args.hybrid_split, args.model_neurons_path)
+         args.memory_limit, args.device, args.num_fewshot, args.limit, args.output_path, siot_method_config, args.cluster_path, args.cpu_only, args.hybrid_split, args.model_neurons_filepath)
 
 
     

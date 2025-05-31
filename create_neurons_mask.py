@@ -2,7 +2,6 @@ import json
 import torch
 import pickle
 import os
-import transformers.siot_variables.variables as variables
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -55,9 +54,10 @@ def load_neurons_tensor(neurons_filepath):
 
     return torch.tensor(neurons)
 
-def main():
-    if variables.base_neurons_type not in ["model", "dataset"]:
+def main(start_num, end_num, siot_method_config):
+    base_neurons_percent, base_neurons_type, loaded_neurons_percent, model_neurons_filepath, dataset_neurons_filepath, mask_filepath = siot_method_config.values()
+    if base_neurons_type not in ["model", "dataset"]:
         raise RuntimeError("base_neurons_type must be either set to 'model' or 'dataset'")
     
-    create_mask(variables.start_num, variables.end_num, variables.base_neurons_percent, variables.base_neurons_type, variables.loaded_neurons_percent, variables.model_neurons_filepath, variables.dataset_neurons_filepath, variables.mask_filepath)
+    create_mask(start_num, end_num, base_neurons_percent, base_neurons_type, loaded_neurons_percent, model_neurons_filepath, dataset_neurons_filepath, mask_filepath)
     print("Mask is successfully created!")
