@@ -1,1 +1,1 @@
-MASK_FILEPATH = "neurons/truthfulqa.pkl"
+MASK_FILEPATH = "neurons/mask.pkl"
