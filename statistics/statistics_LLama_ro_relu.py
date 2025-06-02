@@ -6,10 +6,10 @@ from tqdm import tqdm
 # === CONFIG ===
 model_name = "../models/llama3-3b"
 max_new_tokens = 30
-output_file = "non_relu.statistics"
-dataset_file = "dataset.txt"
-task_type = "translate_de_en"
-prompt_limit = 30000  # Limit how many prompts to process
+output_file = "triviaqa.statistics"
+dataset_file = "triviaqa.txt"
+task_type = "QA"
+prompt_limit = 5000  # Limit how many prompts to process
 do_sample = False  # Set to True if you want to sample instead of greedy generation
 decoding_stage = True
 
@@ -72,7 +72,6 @@ def pre_process_prompt(prompt, task_type):
 # === Main function to process one prompt ===
 def process_prompt(prompt, task_type):
     prompt = pre_process_prompt(prompt, task_type)
-    print("Processing this prompt: ", prompt)
     global tokenCount
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
     tokenCountInput = inputs["input_ids"].shape[-1]
