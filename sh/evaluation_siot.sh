@@ -3,7 +3,7 @@
 # SIOT Method Variables: 
 START_NUM=5
 END_NUM=27
-BASE_NEURONS_PERCENT=0.4
+BASE_NEURONS_PERCENT=0.3
 BASE_NEURONS_TYPE="model"
 LOADED_NEURONS_PERCENT=0.7
 MODEL_NEURONS_FILEPATH="neurons/llama3-3b_model_neurons.json"
@@ -14,7 +14,7 @@ MASK_FILEPATH="neurons/mask.pkl"
 DIR_PATH="$(cd .. && pwd)"
 TOKEN_SPARSITY=0.2
 SPARSITY=0.4
-LIMIT=1
+LIMIT=1000
 USE_SIOT_IMPROVEMENTS=True
 METHOD="siot"
 TASK_NAME="truthfulqa_gen"
@@ -32,7 +32,7 @@ run()
 
 
 for TASK_NAME in "truthfulqa_gen" "triviaqa" "wmt16-de-en" "squadv2"; do
-    DATASET_NEURONS_FILEPATH="neurons/${$TASK_NAME}_dataset_neurons.json"
+    DATASET_NEURONS_FILEPATH="neurons/${TASK_NAME}_dataset_neurons.json"
     # Make sure to include the variable you are tuning in the filename, so that files don't overlap
     # All information are included in the evaluation result file.
     # If you want to tune another variable, I suggest to use a different directory (EDIT $OUT_DIR)
