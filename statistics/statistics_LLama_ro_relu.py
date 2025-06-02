@@ -4,13 +4,14 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from tqdm import tqdm
 
 # === CONFIG ===
-model_name = "meta-llama/Llama-3.2-3B"
+model_name = "../models/llama3-3b"
 max_new_tokens = 30
 output_file = "non_relu.statistics"
 dataset_file = "dataset.txt"
+task_type = "translate_de_en"
 prompt_limit = 30000  # Limit how many prompts to process
-do_sample = True  # Set to True if you want to sample instead of greedy generation
-decoding_stage = False
+do_sample = False  # Set to True if you want to sample instead of greedy generation
+decoding_stage = True
 
 # === Load model and tokenizer ===
 tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
@@ -49,8 +50,29 @@ try:
 except FileNotFoundError:
     pass
 
+def pre_process_prompt(prompt, task_type):
+    if task_type == 'QA':
+        final_prompt = 'Question: ' + prompt + '\nAnswer: '
+        
+    elif task_type == 'summarize':
+        pre_prompt = 'Summarize the following document: '
+        final_prompt = pre_prompt + prompt
+        
+    elif task_type == 'translate_de_en':
+        final_prompt = 'German phrase: ' + prompt + '\nEnglish phrase: '
+        
+    elif task_type == 'translate_ro_en':
+        final_prompt = 'Romanian phrase: ' + prompt + '\nEnglish phrase: '
+
+    else:
+        raise RuntimeError("Task_type must be one of QA, summarize, translate_de_en or translate_ro_en")
+    
+    return final_prompt
+
 # === Main function to process one prompt ===
-def process_prompt(prompt):
+def process_prompt(prompt, task_type):
+    prompt = pre_process_prompt(prompt, task_type)
+    print("Processing this prompt: ", prompt)
     global tokenCount
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
     tokenCountInput = inputs["input_ids"].shape[-1]
@@ -85,7 +107,7 @@ with open(dataset_file, "r") as f:
 
     for line in tqdm(f, desc="Processing prompts"):
         prompt = line.strip()
-        _ = process_prompt(prompt)
+        _ = process_prompt(prompt, task_type)
 
 
         i += 1
