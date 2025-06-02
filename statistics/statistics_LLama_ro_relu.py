@@ -55,7 +55,7 @@ def pre_process_prompt(prompt, task_type):
         final_prompt = 'Question: ' + prompt + '\nAnswer: '
         
     elif task_type == 'summarize':
-        pre_prompt = 'Summarize the following document: '
+        pre_prompt = 'Summarize the following document:\n'
         final_prompt = pre_prompt + prompt
         
     elif task_type == 'translate_de_en':
