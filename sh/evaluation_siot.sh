@@ -7,7 +7,7 @@ BASE_NEURONS_PERCENT=0.3
 BASE_NEURONS_TYPE="model"
 LOADED_NEURONS_PERCENT=0.7
 MODEL_NEURONS_FILEPATH="neurons/llama3-3b_model_neurons.json"
-DATASET_NEURONS_FILEPATH="neurons/truthfulqa_gen_dataset_neurons.json"
+DATASET_NEURONS_FILEPATH="neurons/triviaqa_dataset_neurons.json"
 MASK_FILEPATH="neurons/mask.pkl"
 
 
@@ -17,7 +17,7 @@ SPARSITY=0.4
 LIMIT=1000
 USE_SIOT_IMPROVEMENTS=True
 METHOD="siot"
-TASK_NAME="truthfulqa_gen"
+TASK_NAME="triviaqa"
 MODEL_NAME="llama3-3b"
 
 run()
@@ -31,7 +31,7 @@ run()
 }
 
 
-for TASK_NAME in "truthfulqa_gen" "triviaqa" "wmt16-de-en" "squadv2"; do
+for TASK_NAME in "triviaqa" "squadv2" "wmt16-de-en" "wmt16-ro-en" "xsum" "longbench_samsum"; do
     DATASET_NEURONS_FILEPATH="neurons/${TASK_NAME}_dataset_neurons.json"
     # Make sure to include the variable you are tuning in the filename, so that files don't overlap
     # All information are included in the evaluation result file.
