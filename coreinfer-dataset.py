@@ -9,7 +9,7 @@ from datasets import load_from_disk
 
 from scores.neuron_score_writer import write_neuron_scores
 
-from transformers.siot import USE_SIOT_IMPROVEMENTS, MASK_FILEPATH
+from transformers.siot import USE_SIOT_IMPROVEMENTS
 import create_neurons_mask
 
 
@@ -126,6 +126,10 @@ def main(output_path, method, model_name, checkpoint_path, sparsity, start_num, 
     
     if (USE_SIOT_IMPROVEMENTS and method == "siot"):
         create_neurons_mask.main(start_num, end_num, siot_method_config)
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        with open(f"{script_dir}/transformers/siot_variables/mask_filepath.txt", "r") as f:
+            MASK_FILEPATH = f.readlines()[0]
         print(f"SIOT: Use Mask for partial loading, mask file: {MASK_FILEPATH}") 
     
     model, tokenizer, num_layers = load_model(model_name, start_num, end_num, checkpoint_path, device, memory_limit)

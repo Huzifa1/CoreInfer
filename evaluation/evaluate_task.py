@@ -7,12 +7,12 @@ from utils import *
 from common import *
 import json
 from scores.neuron_score_writer import write_neuron_scores
-from transformers.siot import USE_SIOT_IMPROVEMENTS, MASK_FILEPATH
+from transformers.siot import USE_SIOT_IMPROVEMENTS
 from convert.convert_llama_model_score import SPARSITY_LEVELS
 import create_neurons_mask
 
 default_device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
+MASK_FILEPATH = ""
 
 # Test Model
 import lm_eval
@@ -57,6 +57,11 @@ def main(method, task_name, model_name, checkpoint_path, sparsity, start_num, en
     
     if (USE_SIOT_IMPROVEMENTS and method == "siot"):
         create_neurons_mask.main(start_num, end_num, siot_method_config)
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        parent_dir = os.path.dirname(script_dir)
+        
+        with open(f"{parent_dir}/transformers/siot_variables/mask_filepath.txt", "r") as f:
+            MASK_FILEPATH = f.readlines()[0]
         print(f"SIOT: Use Mask for partial loading, mask file: {MASK_FILEPATH}") 
     
     model, tokenizer, num_layers = load_model(model_name, start_num, end_num, checkpoint_path, device, memory_limit)

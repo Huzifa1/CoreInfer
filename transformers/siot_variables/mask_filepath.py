@@ -1,1 +1,0 @@
-MASK_FILEPATH = "neurons/mask.pkl"

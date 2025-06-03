@@ -39,8 +39,8 @@ def create_mask(start_num, end_num, base_neurons_percent, base_neurons_type, loa
     with open(f"{current_dir}/{mask_filepath}", "wb") as f:
         pickle.dump(neurons_to_load, f)
         
-    with open(f"{current_dir}/transformers/siot_variables/mask_filepath.py", "w") as f:
-        f.write(f'MASK_FILEPATH = "{current_dir}/{mask_filepath}"')
+    with open(f"{current_dir}/transformers/siot_variables/mask_filepath.txt", "w") as f:
+        f.write(f'{current_dir}/{mask_filepath}')
     
     
 def load_neurons_tensor(neurons_filepath):
