@@ -6,15 +6,15 @@ END_NUM=27
 BASE_NEURONS_PERCENT=0.3
 BASE_NEURONS_TYPE="model"
 LOADED_NEURONS_PERCENT=0.7
-MODEL_NEURONS_FILEPATH="neurons/llama3-3b_model_neurons.json"
-DATASET_NEURONS_FILEPATH="neurons/triviaqa_dataset_neurons.json"
+MODEL_NEURONS_FILEPATH="neurons/llama3-3b_model_neurons_new.json"
+DATASET_NEURONS_FILEPATH="neurons/qa.json"
 MASK_FILEPATH="neurons/mask.pkl"
 
 
 DIR_PATH="$(cd .. && pwd)"
 TOKEN_SPARSITY=0.2
 SPARSITY=0.4
-LIMIT=1000
+LIMIT=500
 USE_SIOT_IMPROVEMENTS=True
 METHOD="siot"
 TASK_NAME="triviaqa"
@@ -31,16 +31,17 @@ run()
 }
 
 
-for TASK_NAME in "triviaqa" "squadv2" "wmt16-de-en" "wmt16-ro-en" "xsum" "longbench_samsum"; do
-    DATASET_NEURONS_FILEPATH="neurons/${TASK_NAME}_dataset_neurons.json"
-    # Make sure to include the variable you are tuning in the filename, so that files don't overlap
-    # All information are included in the evaluation result file.
-    # If you want to tune another variable, I suggest to use a different directory (EDIT $OUT_DIR)
+for TASK_NAME in "triviaqa" "squadv2" "wmt16-de-en" "wmt16-ro-en" "xsum" "cnn_dailymail"; do
 
-    # For example, if you are tuning BASE_NEURON_PERCENT:
-    for BASE_NEURON_PERCENT in 0.1 0.2 0.3 0.4; do
-        FILE_NAME="${BASE_NEURON_PERCENT}.json"
-        run
-    done
+    if [ "$TASK_NAME" = "triviaqa" ] || [ "$TASK_NAME" = "squadv2" ]; then
+        DATASET_NEURONS_FILEPATH="neurons/qa.json"
+    elif [ "$TASK_NAME" = "wmt16-de-en" ] || [ "$TASK_NAME" = "wmt16-ro-en" ]; then
+        DATASET_NEURONS_FILEPATH="neurons/translate.json"
+    elif [ "$TASK_NAME" = "xsum" ] || [ "$TASK_NAME" = "cnn_dailymail" ]; then
+        DATASET_NEURONS_FILEPATH="neurons/summarize.json"
+    fi
+
+    FILE_NAME="task_specific.json"
+    run
 done
 
