@@ -15,8 +15,10 @@ class CustomMLPLayer(nn.Module):
 
         if "down" in name:
             neuron_num = int(weight.size(1) * sparsity)
+            self.filtered_W = torch.zeros((weight.size(0),neuron_num)).to(torch.float16).to(device)
         else:
             neuron_num = int(weight.size(0) * sparsity)
+            self.filtered_W = torch.zeros((neuron_num, weight.size(1))).to(torch.float16).to(device)
 
 
         self.weight = weight.to(device)
@@ -29,7 +31,6 @@ class CustomMLPLayer(nn.Module):
         self.neuron_num = neuron_num
         self.memory_limit = memory_limit
                 
-
     def forward(self, x):
         device = torch.device("cpu") if self.cpu_only else torch.device("cuda")
         global indices_list_all
@@ -46,25 +47,22 @@ class CustomMLPLayer(nn.Module):
                     self.weight = self.weight.cpu()
                     self.filtered_W = torch.zeros_like(self.weight).cuda().to(torch.float16)
 
-                self.filtered_W = self.weight[:, indices_all].clone().to(device)
+                self.filtered_W[:, :indices_all.size(0)].copy_(self.weight[:, indices_all].to(device))
                 
                 if self.num == (self.start_num + 1):
                     indices_list_all=[]
                     
                 indices_list_all.append(indices_all)
 
-                del self.weight
         else:
             if "down" not in self.name:
                 if not self.weight_updated:
                     indices = indices_list_all[self.num - (self.start_num + 1)]
-                    self.filtered_W = self.weight[indices,:].clone().to(device)
+                    self.filtered_W[:indices.size(0), :].copy_(self.weight[indices, :].to(device))
                     if self.memory_limit:
                         self.weight = self.weight.cpu()
                     self.weight_updated = True
                     
-                    del self.weight
-
             true_value = x @ self.filtered_W.T
         return true_value
 

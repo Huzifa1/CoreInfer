@@ -18,10 +18,8 @@ class CustomMLPLayer(nn.Module):
         neuron_num = round(original_neurons_num * sparsity)
         if "down" in name:
             loaded_neuron_num = weight.size(1)
-            self.filtered_W = torch.zeros((weight.size(0),neuron_num)).to(torch.float16).to(device)
         else:
             loaded_neuron_num = weight.size(0)
-            self.filtered_W = torch.zeros((neuron_num, weight.size(1))).to(torch.float16).to(device)
 
         if neuron_num > loaded_neuron_num:
             raise RuntimeError(f"Number of required neurons ({neuron_num}) is larger than the number of loaded neurons ({loaded_neuron_num})")
@@ -49,6 +47,10 @@ class CustomMLPLayer(nn.Module):
         if x.size(1)>1:
             self.weight_updated = False
             true_value = x @ self.weight.T.to(device)
+            num_neurons = self.weight.size(1)
+            
+            if self.memory_limit:
+                self.weight = self.weight.cpu()
 
             if "down" in self.name:
                 squeezed_x = x.squeeze()
@@ -60,7 +62,7 @@ class CustomMLPLayer(nn.Module):
                 
                 if self.base_neurons_percent < self.sparsity:
                     # Now fill up with core neurons
-                    core_neurons = common.get_core_neurons(squeezed_x, self.token_sparsity, 1, self.weight.size(1))
+                    core_neurons = common.get_core_neurons(squeezed_x, self.token_sparsity, 1, num_neurons)
                 
                     # Now remove the overlap
                     mask = ~torch.isin(core_neurons, base_neurons)
@@ -71,13 +73,6 @@ class CustomMLPLayer(nn.Module):
                     indices_all = torch.cat((base_neurons, unique_core_neurons_to_compute))
                 else:
                     indices_all = base_neurons
-              
-                            
-                if self.memory_limit:
-                    self.weight = self.weight.cpu()
-                    self.filtered_W = torch.zeros_like(self.weight).cuda().to(torch.float16)
-
-                self.filtered_W[:, :indices_all.size(0)].copy_(self.weight[:, indices_all].to(device))
                 
                 if self.num == (self.start_num + 1):
                     indices_list_all=[]
@@ -85,16 +80,12 @@ class CustomMLPLayer(nn.Module):
                 indices_list_all.append(indices_all)
 
         else:
-            if "down" not in self.name:
-                if not self.weight_updated:
-                    indices = indices_list_all[self.num - (self.start_num + 1)]
-                    self.filtered_W[:indices.size(0), :].copy_(self.weight[indices, :].to(device))
-                    if self.memory_limit:
-                        self.weight = self.weight.cpu()
-                    self.weight_updated = True
-                    
-            
-            true_value = x @ self.filtered_W.T
+            indices = indices_list_all[self.num - (self.start_num + 1)]
+
+            if "down" in self.name:
+                true_value = x @ self.weight[:, indices].T.to(device)
+            else:
+                true_value = x @ self.weight[indices, :].T.to(device)
             
         return true_value
 
