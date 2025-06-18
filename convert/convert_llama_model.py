@@ -15,13 +15,11 @@ class CustomMLPLayer(nn.Module):
 
         if "down" in name:
             neuron_num = int(weight.size(1) * sparsity)
-            self.filtered_W = torch.zeros((weight.size(0),neuron_num)).to(torch.float16).to(device)
         else:
             neuron_num = int(weight.size(0) * sparsity)
-            self.filtered_W = torch.zeros((neuron_num, weight.size(1))).to(torch.float16).to(device)
 
 
-        self.weight = weight.clone().to(device)
+        self.weight = weight.to(device)
         self.num = num
         self.name = name
         self.token_sparsity = token_sparsity
@@ -30,10 +28,7 @@ class CustomMLPLayer(nn.Module):
         self.start_num = start_num
         self.neuron_num = neuron_num
         self.memory_limit = memory_limit
-        
-        self.activation_ratio = 0.0
-        
-
+                
 
     def forward(self, x):
         device = torch.device("cpu") if self.cpu_only else torch.device("cuda")
@@ -44,11 +39,8 @@ class CustomMLPLayer(nn.Module):
             true_value = x @ self.weight.T.to(device)
 
             if "down" in self.name:
-                squeezed_x = x.clone().squeeze()
+                squeezed_x = x.squeeze()
                 indices_all = common.get_core_neurons(squeezed_x, self.token_sparsity, self.sparsity, self.weight.size(1))
-
-                number_of_neurons = squeezed_x.shape[1]
-                self.activation_ratio = len(indices_all) / number_of_neurons
                 
                 if self.memory_limit:
                     self.weight = self.weight.cpu()
@@ -61,17 +53,17 @@ class CustomMLPLayer(nn.Module):
                     
                 indices_list_all.append(indices_all)
 
-                self.weight = self.weight.cpu()
+                del self.weight
         else:
             if "down" not in self.name:
                 if not self.weight_updated:
                     indices = indices_list_all[self.num - (self.start_num + 1)]
-                    number_of_neurons = self.weight.shape[0]
-                    self.activation_ratio = len(indices) / number_of_neurons
                     self.filtered_W = self.weight[indices,:].clone().to(device)
                     if self.memory_limit:
                         self.weight = self.weight.cpu()
                     self.weight_updated = True
+                    
+                    del self.weight
 
             true_value = x @ self.filtered_W.T
         return true_value

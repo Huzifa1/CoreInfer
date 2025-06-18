@@ -18,9 +18,7 @@ class CustomMLPLayer(nn.Module):
         neuron_num = round(original_neurons_num * sparsity)
         if "down" in name:
             loaded_neuron_num = weight.size(1)
-            self.filtered_W = torch.zeros((weight.size(0),neuron_num)).to(torch.float16).to(device)
         else:
-            self.filtered_W = torch.zeros((neuron_num, weight.size(1))).to(torch.float16).to(device)
             loaded_neuron_num = weight.size(0)
 
         if neuron_num > loaded_neuron_num:
@@ -30,7 +28,7 @@ class CustomMLPLayer(nn.Module):
             p = siot_method_config["base_neurons_percent"]
             raise RuntimeError(f"base_neurons_percent ({p}) is larger than sparsity ({sparsity}).")
 
-        self.weight = weight.clone().to(device)
+        self.weight = weight.to(device)
         self.num = num
         self.name = name
         self.token_sparsity = token_sparsity
@@ -43,7 +41,6 @@ class CustomMLPLayer(nn.Module):
         self.loaded_neuron_num = loaded_neuron_num
         self.base_neurons_percent = siot_method_config["base_neurons_percent"]
 
-
     def forward(self, x):
         device = torch.device("cpu") if self.cpu_only else torch.device("cuda")
         global indices_list_all
@@ -53,7 +50,7 @@ class CustomMLPLayer(nn.Module):
             true_value = x @ self.weight.T.to(device)
 
             if "down" in self.name:
-                squeezed_x = x.clone().squeeze()
+                squeezed_x = x.squeeze()
 
                 # Get base neurons
                 # This works since when loading, base neurons are sorted at the beginning
@@ -86,7 +83,7 @@ class CustomMLPLayer(nn.Module):
                     
                 indices_list_all.append(indices_all)
 
-                self.weight = self.weight.cpu()
+                del self.weight
         else:
             if "down" not in self.name:
                 if not self.weight_updated:
@@ -95,6 +92,8 @@ class CustomMLPLayer(nn.Module):
                     if self.memory_limit:
                         self.weight = self.weight.cpu()
                     self.weight_updated = True
+                    
+                    del self.weight
 
             true_value = x @ self.filtered_W.T
             
