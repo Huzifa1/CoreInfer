@@ -6,7 +6,7 @@ END_NUM=26
 BASE_NEURONS_PERCENT=0.3
 BASE_NEURONS_TYPE="dataset"
 LOADED_NEURONS_PERCENT=0.7
-MODEL_NEURONS_FILEPATH="neurons/llama3-3b_model_neurons_new.json"
+MODEL_NEURONS_FILEPATH="neurons/llama3-3b_model_neurons.json"
 DATASET_NEURONS_FILEPATH="neurons/qa.json"
 MASK_FILEPATH="neurons/mask.pkl"
 

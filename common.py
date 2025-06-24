@@ -387,3 +387,31 @@ def read_cluster_files(cluster_path, num_layers):
         Predictor.append(predict_layer)
 
     return kmeans, mlb_loaded, Predictor
+
+def reorder_tensor(A, B, is_reverse=False, is_restore=False):
+
+    M, N = A.shape
+    if is_reverse:
+        N, M = A.shape
+    
+    all_indices = torch.arange(N, device=A.device)
+    mask = torch.ones(N, dtype=torch.bool, device=A.device)
+    mask[B] = False
+    other_indices = all_indices[mask]
+    
+    new_order = torch.cat([B, other_indices], dim=0)
+    
+    inverse_order = []
+    if is_restore:
+        inverse_order = torch.empty_like(new_order)
+        inverse_order[new_order] = torch.arange(N, device=A.device)
+        new_order = inverse_order
+    
+    if is_reverse:
+        A.copy_(A[new_order, :])
+    else:
+        A.copy_(A[:, new_order])
+    
+    del all_indices, mask, other_indices, new_order, inverse_order
+    if A.is_cuda:
+        torch.cuda.empty_cache()
