@@ -1,10 +1,10 @@
 #!/bin/sh
 
 # SIOT Method Variables: 
-START_NUM=5
-END_NUM=27
+START_NUM=4
+END_NUM=26
 BASE_NEURONS_PERCENT=0.3
-BASE_NEURONS_TYPE="model"
+BASE_NEURONS_TYPE="dataset"
 LOADED_NEURONS_PERCENT=0.7
 MODEL_NEURONS_FILEPATH="neurons/llama3-3b_model_neurons_new.json"
 DATASET_NEURONS_FILEPATH="neurons/qa.json"
