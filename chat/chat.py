@@ -12,6 +12,7 @@ import create_neurons_mask
 
 default_device = 'cuda' if torch.cuda.is_available() else 'cpu'
 MASK_FILEPATH = ""
+SHOW_DECODING_SPEED = True
 
 
 # To encode Path variables into json files
@@ -55,27 +56,14 @@ def top_p_sampling(next_token_logits, tokenizer, top_p, generated):
 def chat(model, tokenizer, num_fewshot, limit, config, device):
     model.eval()
     
-    max_prompt_length = 2000
     prompt_counter = 0
-    text_context = ""
     while True:
         user_prompt = input("You: ")
         
         if (user_prompt == "exit"):
             break
         
-        if (prompt_counter == 0):
-            # prompt = process_prompt_stable(user_prompt, "QA", num_fewshot)
-            prepromt = "You chat with a good friend. Answer all questions in a detailed way. His statements start with F:, yours with A:.\n\nF: How was your weekend?\nA: Very good, the weather was nice.\nF:Who is Barack Obama?\nA:He was the president of the USA.\nQ:"
-            prompt = prepromt + user_prompt
-            text_context += prompt + "\n"
-        else:
-            text_context += "Q: " + user_prompt + "\n"
-            text_context = text_context[-max_prompt_length:]
-            prompt = text_context
-        
-        print("__________________________")
-        print(text_context)
+        prompt = process_prompt_stable(user_prompt, "QA", num_fewshot)
         
         input_ids = tokenizer.encode(prompt, return_tensors='pt').to(device)
         prompt_token_length = input_ids.shape[-1]
@@ -85,6 +73,7 @@ def chat(model, tokenizer, num_fewshot, limit, config, device):
             outputs = model(input_ids, use_cache=True)
             past_key_values = outputs.past_key_values
         
+        start_time = time.time()
         answer = ""
         top_p = 0.9
         generated = input_ids
@@ -111,13 +100,19 @@ def chat(model, tokenizer, num_fewshot, limit, config, device):
                 break
             token_counter += 1
         
-        answer = answer.replace("\n", "")
-        if ("A:" in answer):
-            text_context += answer + "\n"
-        else:
-            text_context += "A: " + answer + "\n"
+        if SHOW_DECODING_SPEED:
+            end_time = time.time()
+            
+            num_generated_tokens = generated.size(1) - input_ids.size(1)
+            
+            elapsed_time = end_time - start_time
+            tokens_per_second = num_generated_tokens / elapsed_time
+            print(f"Decoding speed: {token_counter} token/sec\n")
         
-        print("\n")
+        answer = answer.replace("\n", "")
+        print(answer)
+        
+        print("\n\n")
         prompt_counter += 1
 
 
