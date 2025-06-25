@@ -15,6 +15,8 @@ import create_neurons_mask
 
 default_device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
+DECODING_SPEEDS = list()
+
 
 def greedy_sampling(next_token_logits, tokenizer, generated):
     next_token_id = torch.argmax(next_token_logits, dim=-1)
@@ -115,6 +117,7 @@ def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_t
     
     # print(f'\n\nGenerated {num_generated_tokens} tokens in {elapsed_time:.2f} seconds.')
     # print(f'Decoding speed: {tokens_per_second:.2f} tokens/second')
+    DECODING_SPEEDS.append(tokens_per_second)
     
     return generated_text
 
@@ -128,9 +131,9 @@ def main(output_path, method, model_name, checkpoint_path, sparsity, start_num, 
         create_neurons_mask.main(start_num, end_num, siot_method_config)
         script_dir = os.path.dirname(os.path.abspath(__file__))
         
-        with open(f"{script_dir}/transformers/siot_variables/mask_filepath.txt", "r") as f:
-            MASK_FILEPATH = f.readlines()[0]
-        print(f"SIOT: Use Mask for partial loading, mask file: {MASK_FILEPATH}") 
+        #with open(f"{script_dir}/transformers/siot_variables/mask_filepath.txt", "r") as f:
+        #    MASK_FILEPATH = f.readlines()[0]
+        #print(f"SIOT: Use Mask for partial loading, mask file: {MASK_FILEPATH}") 
     
     model, tokenizer, num_layers = load_model(model_name, start_num, end_num, checkpoint_path, device, memory_limit)
 
@@ -141,13 +144,14 @@ def main(output_path, method, model_name, checkpoint_path, sparsity, start_num, 
     command_str = f"Command: {' '.join(sys.argv)}\n"
     output_str += command_str
     
-    if USE_SIOT_IMPROVEMENTS:
-        output_str += f"mask: {MASK_FILEPATH}\n"
+    #if USE_SIOT_IMPROVEMENTS:
+    #    output_str += f"mask: {MASK_FILEPATH}\n"
     output_str += "\n\n"
     
     dataset = load_from_disk(f"./dataset/{dataset_name}")
     
     sparsity_per_layer = [list() for element in range(0, num_layers)]
+    # DECODING_SPEEDS = list()
     
     if max_items is None:
         max_items = len(dataset["validation"])
@@ -178,6 +182,7 @@ def main(output_path, method, model_name, checkpoint_path, sparsity, start_num, 
             output_str += "Answer: {}\n".format(answer)
             generated_text = generate(method, model, tokenizer, question, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p)
             output_str += "Model Response: {}\n".format(generated_text)
+        output_str += f"Decoding speed: {DECODING_SPEEDS[-1]} token/s"
         
         try:
             activation_ratios = []
@@ -194,6 +199,8 @@ def main(output_path, method, model_name, checkpoint_path, sparsity, start_num, 
         except AttributeError:
             i = 0 # do nothing
         
+        mean_decoding_speed = torch.Tensor(DECODING_SPEEDS).mean()
+        output_str += f"\nMean decoding speed: {mean_decoding_speed}"
         output_str += "\n\n"
         
         output_file.write(output_str)

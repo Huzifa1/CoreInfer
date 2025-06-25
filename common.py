@@ -11,11 +11,11 @@ from convert.convert_llama_model_score import convert_llama_model_score
 from convert.convert_llama_model_dynamic_cut import convert_llama_model_dynamic_cut
 from convert.convert_llama_model_dynamic_cut_ci import convert_llama_model_dynamic_cut_ci
 from convert.convert_llama_model_static_cut import convert_llama_model_static_cut
-from convert.convert_llama_model_dense import convert_llama_model_dense
 from convert.convert_llama_model_moving_cut import convert_llama_model_moving_cut
-from convert.convert_opt_model_dense import convert_opt_model_dense
 from convert.convert_llama_model_model_neurons import convert_llama_model_model_neurons
 from convert.convert_llama_model_hybrid_neurons import convert_llama_model_hybrid_neurons
+# from convert.convert_llama_model_dense import convert_llama_model_dense
+# from convert.convert_opt_model_dense import convert_opt_model_dense
 
 from utils import *
 from sklearn.cluster import KMeans
@@ -96,8 +96,8 @@ def convert_model(method, model, model_name, num_layers, sparsity, start_num, en
             model = convert_opt_model(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, sparsity_levels_path)
         elif method == 'similarity_guided':
             model = convert_opt_model_sim(model, num_layers, sparsity, start_num, end_num, memory_limit, cluster_path, cpu_only)
-        elif method == 'dense':
-            model = convert_opt_model_dense(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
+        # elif method == 'dense':
+        #     model = convert_opt_model_dense(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
         elif method == 'model_neurons':
             model = convert_opt_model_model_neurons(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
 
@@ -112,8 +112,8 @@ def convert_model(method, model, model_name, num_layers, sparsity, start_num, en
             model = convert_llama_model_dynamic_cut_ci(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
         elif method == 'static_cut':
             model = convert_llama_model_static_cut(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
-        elif method == 'dense':
-            model = convert_llama_model_dense(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
+        # elif method == 'dense':
+        #     model = convert_llama_model_dense(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
         elif method == 'moving_cut':
             model = convert_llama_model_moving_cut(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
         elif method == 'score':
