@@ -67,6 +67,9 @@ def get_layer_number(model_name, layer_name):
 
 def load_model(model_name, start_num, end_num, checkpoint_path, device, memory_limit):
     start_time = time.time()
+    
+    if (device == "cuda" and torch.cuda.is_available()):
+        device = 0
 
     if memory_limit == True:
         model, num_layers = load_model_memory_limit(checkpoint_path, start_num, end_num, model_name)
@@ -388,7 +391,9 @@ def read_cluster_files(cluster_path, num_layers):
 
     return kmeans, mlb_loaded, Predictor
 
-def reorder_tensor(A, B, is_reverse=False, is_restore=False):
+def reorder_tensor(A: torch.Tensor, B: torch.Tensor, is_reverse=False, is_restore=False):
+    if (A.device != B.device):
+        B = B.to(device=A.device)
 
     M, N = A.shape
     if is_reverse:
@@ -397,7 +402,7 @@ def reorder_tensor(A, B, is_reverse=False, is_restore=False):
     all_indices = torch.arange(N, device=A.device)
     mask = torch.ones(N, dtype=torch.bool, device=A.device)
     mask[B] = False
-    other_indices = all_indices[mask]
+    other_indices = all_indices[mask].to(device=A.device)
     
     new_order = torch.cat([B, other_indices], dim=0)
     
