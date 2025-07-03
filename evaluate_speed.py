@@ -10,8 +10,6 @@ from utils import *
 from common import *
 from transformers.siot import USE_SIOT_IMPROVEMENTS
 import create_neurons_mask
-from convert.convert_llama_model_siot import profiling
-import json
 
 default_device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -67,11 +65,6 @@ def main(method, model_name, checkpoint_path, sparsity, start_num, end_num, toke
     model = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, siot_method_config, cluster_path, cpu_only, sparsity_levels_path, hybrid_split, model_neurons_filepath)
 
     evaluate(model, tokenizer, num_tokens_to_generate, device)
-
-    with open("/local/huzaifa/CoreInfer/ignore/profiling/results.json", "w") as f:
-        json.dump(profiling, f, indent=4)
-
-
 
 
 if __name__ == '__main__':
