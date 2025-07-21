@@ -116,7 +116,7 @@ def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_t
 
 
 
-def main(method, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, prompt, memory_limit, num_fewshot, task_type, num_tokens_to_generate, device, sampling_method, siot_method_config, cluster_path = None, cpu_only = False, top_p = None, sparsity_levels_path = None, hybrid_split = None, model_neurons_filepath = None, is_chat: bool = False):
+def main(method, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, prompt, memory_limit, num_fewshot, task_type, num_tokens_to_generate, device, sampling_method, siot_method_config, cluster_path = None, cpu_only = False, top_p = None, sparsity_levels_path = None, hybrid_split = None, model_neurons_filepath = None, function: str = "normal"):
     
     if (USE_SIOT_IMPROVEMENTS and method == "siot"):
         create_neurons_mask.main(start_num, end_num, siot_method_config)
@@ -130,15 +130,34 @@ def main(method, model_name, checkpoint_path, sparsity, start_num, end_num, toke
     
     model = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, siot_method_config, cluster_path, cpu_only, sparsity_levels_path, hybrid_split, model_neurons_filepath)
 
-    if (not is_chat):
+    if (function == "normal"):
         generate(method, model, tokenizer, prompt, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p)
-    else:
+    elif (function == "chat"):
         prompt = ""
         while True:
             prompt = input("User: ")
             if (prompt == "exit"):
                 break
             generate(method, model, tokenizer, prompt, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p)
+    elif (function == "predefined_prompts"):
+        predefined_prompts = [
+            "You visit a museum with ancient Greek artifacts. Which ancient Greek philosopher is known for his method of questioning and debate?",
+            "You walk through a dense rainforest and hear monkeys chattering in the trees. What is the name of the large tropical forest found near the equator?",
+            "You enjoy a cup of hot chocolate on a cold winter day. What ingredient is typically used to make hot chocolate?",
+            "You read a novel about a detective solving mysteries. Who is the famous detective created by Sir Arthur Conan Doyle?",
+            "You listen to a rock band perform a famous song on stage. Which band is known for the song \"Bohemian Rhapsody?\"",
+            "You read about the Industrial Revolution. What were the key technological advancements during the Industrial Revolution?",
+            "You read about the exploration of the New World by Christopher Columbus. What were the motivations for European exploration?",
+            "You explore a museum with dinosaur skeletons on display. What is the name of the prehistoric period when dinosaurs lived?",
+            "You’re at a concert listening to a famous pop artist. Who is known as the \"King of Pop?\"",
+            "You take a selfie on top of the Empire State Building. In which U.S. city is the Empire State Building located?",
+            "You’re planting a tree in your backyard. What is the process by which trees make their own food?",
+            "What is the capital of Germany?",
+        ]
+        for prompt in predefined_prompts:
+            generate(method, model, tokenizer, prompt, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p)
+    else:
+        raise ValueError("No function set: set --function")
 
 
 
@@ -175,7 +194,7 @@ if __name__ == '__main__':
     parser.add_argument('--dataset_neurons_filepath', type=Path, default="neurons/qa.json", help='Path to dataset neurons file')
     parser.add_argument('--mask_filepath', type=Path, default="neurons/mask.pkl", help='Path to output mask file')
 
-    parser.add_argument('--chat', action='store_true', help='Use chat functionality')
+    parser.add_argument('--function', type=str, choices=['normal', 'chat', 'predefined_prompts'], default='normal', help='Function to use')
 
 
     args = parser.parse_args()
@@ -200,4 +219,4 @@ if __name__ == '__main__':
         "mask_filepath": args.mask_filepath
     }
 
-    main(args.method, args.model_name, args.checkpoint_path, args.sparsity, args.start_num, args.end_num, args.token_sparsity, args.prompt, args.memory_limit, args.num_fewshot, args.task_type, args.num_tokens_to_generate, args.device, args.sampling_method, siot_method_config, args.cluster_path, args.cpu_only, args.top_p, args.sparsity_levels_path, args.hybrid_split, args.model_neurons_filepath, args.chat)
+    main(args.method, args.model_name, args.checkpoint_path, args.sparsity, args.start_num, args.end_num, args.token_sparsity, args.prompt, args.memory_limit, args.num_fewshot, args.task_type, args.num_tokens_to_generate, args.device, args.sampling_method, siot_method_config, args.cluster_path, args.cpu_only, args.top_p, args.sparsity_levels_path, args.hybrid_split, args.model_neurons_filepath, args.function)
