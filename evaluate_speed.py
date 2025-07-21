@@ -78,8 +78,8 @@ if __name__ == '__main__':
     parser.add_argument('--checkpoint_path', type=Path, default=Path("meta-llama/Llama-3.2-3B"), help='Model checkpoint path.')
     parser.add_argument('--device', type=str, default=default_device, help='Device to use')
     parser.add_argument('--sparsity', type=float, default=0.4, help='Sentence Sparsity level.')
-    parser.add_argument('--start_num', type=int, default=5, help='Start layer.')
-    parser.add_argument('--end_num', type=int, default=27, help='End layer.')
+    parser.add_argument('--start_num', type=int, default=3, help='Start layer.')
+    parser.add_argument('--end_num', type=int, default=25, help='End layer.')
     parser.add_argument('--top_p', type=float, default=0.9, help='When set, will use top-p sampling')
     parser.add_argument('--sampling-method', type=str, default="greedy", choices=["greedy", "top-p"], help='Choose sampling method')
     parser.add_argument('--token_sparsity', type=float, default=0.2, help='Token Sparsity level.')
@@ -91,11 +91,11 @@ if __name__ == '__main__':
     parser.add_argument('--hybrid_split', type=float, default=0.5, help='Amout of model neurons')
     
     ## SIOT Method arguments
-    parser.add_argument('--base_neurons_percent', type=float, default=0.4, help='Loaded Base Neurons Percent')
-    parser.add_argument('--base_neurons_type', type=str, choices=['model', 'dataset'], default='model', help='Base Neurons Type')
+    parser.add_argument('--base_neurons_percent', type=float, default=0.3, help='Loaded Base Neurons Percent')
+    parser.add_argument('--base_neurons_type', type=str, choices=['model', 'dataset'], default='dataset', help='Base Neurons Type')
     parser.add_argument('--loaded_neurons_percent', type=float, default=0.7, help='Overall Percent of Loaded Neurons')
-    parser.add_argument('--model_neurons_filepath', type=Path, default="neurons/llama3-3b_model_neurons.json", help='Path to model neurons file')
-    parser.add_argument('--dataset_neurons_filepath', type=Path, default="neurons/truthfulqa_gen_dataset_neurons.json", help='Path to dataset neurons file')
+    parser.add_argument('--model_neurons_filepath', type=Path, default="neurons/llama3-3b_new_model_neurons.json", help='Path to model neurons file')
+    parser.add_argument('--dataset_neurons_filepath', type=Path, default="neurons/qa.json", help='Path to dataset neurons file')
     parser.add_argument('--mask_filepath', type=Path, default="neurons/mask.pkl", help='Path to output mask file')
 
 
