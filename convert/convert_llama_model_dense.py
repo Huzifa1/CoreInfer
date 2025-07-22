@@ -21,7 +21,7 @@ class CustomMLPLayer(nn.Module):
             self.filtered_W = torch.zeros((neuron_num, weight.size(1))).to(torch.float16).to(device)
 
 
-        self.weight = weight.clone().to(device)
+        self.weight = weight.clone().to(device).contiguous()
         self.num = num
         self.name = name
         self.token_sparsity = token_sparsity
@@ -34,7 +34,7 @@ class CustomMLPLayer(nn.Module):
 
     def forward(self, x):
         device = torch.device("cpu") if self.cpu_only else torch.device("cuda")
-        true_value = x @ self.weight.T.to(device)
+        true_value = x @ self.weight.T
         # torch.cuda.synchronize()
         return true_value
 

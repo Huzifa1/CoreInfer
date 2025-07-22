@@ -29,7 +29,7 @@ class CustomMLPLayer(nn.Module):
             p = siot_method_config["base_neurons_percent"]
             raise RuntimeError(f"base_neurons_percent ({p}) is larger than sparsity ({sparsity}).")
 
-        self.weight = weight.to(device)
+        self.weight = weight.to(self.device)
         self.num = num
         self.name = name
         self.token_sparsity = token_sparsity
