@@ -49,7 +49,7 @@ def top_p_sampling(next_token_logits, tokenizer, top_p, generated):
     return generated, next_token_id, next_token_text
 
 # Test Model
-def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p):
+def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p, show_debug: bool = True):
     model.eval()
     if method in ['stable_guided', 'static_cut', 'dynamic_cut', 'dense', 'dynamic_cut_ci', 'model_neurons', 'hybrid_neurons', 'siot']:
         prompt = process_prompt_stable(ori_prompt, task_type, num_fewshot)
@@ -57,9 +57,11 @@ def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_t
         prompt = process_prompt_similarity(ori_prompt, task_type)
     input_ids = tokenizer.encode(prompt, return_tensors='pt').to(device)
     prompt_token_length = input_ids.shape[-1]
-    print(f"Prompt token length: {prompt_token_length}")
+    if show_debug:
+        print(f"Prompt token length: {prompt_token_length}")
     pre_fill_start_time = time.time()
-    print("Starting the prefilling stage...", end="")
+    if show_debug:
+        print("Starting the prefilling stage...", end="")
     
     eos_token_id = tokenizer.convert_tokens_to_ids('.')
     with torch.no_grad():
@@ -68,7 +70,8 @@ def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_t
     
     pre_fill_end_time = time.time()
     pre_fill_elapsed_time = pre_fill_end_time - pre_fill_start_time
-    print(f"Done. Prefilling stage calculated in {pre_fill_elapsed_time:.2f} seconds.\n")
+    if show_debug:
+        print(f"Done. Prefilling stage calculated in {pre_fill_elapsed_time:.2f} seconds.\n")
 
     generated = input_ids
     
@@ -101,8 +104,9 @@ def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_t
     elapsed_time = end_time - start_time
     tokens_per_second = num_generated_tokens / elapsed_time
     
-    print(f'\n\nGenerated {num_generated_tokens} tokens in {elapsed_time:.2f} seconds.')
-    print(f'Decoding speed: {tokens_per_second:.2f} tokens/second')
+    if show_debug:
+        print(f'\n\nGenerated {num_generated_tokens} tokens in {elapsed_time:.2f} seconds.')
+        print(f'Decoding speed: {tokens_per_second:.2f} tokens/second')
     
     # if (method == 'dynamic_cut'):
     #     activation_ratios = []
@@ -138,7 +142,7 @@ def main(method, model_name, checkpoint_path, sparsity, start_num, end_num, toke
             prompt = input("User: ")
             if (prompt == "exit"):
                 break
-            generate(method, model, tokenizer, prompt, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p)
+            generate(method, model, tokenizer, prompt, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p, show_debug=False)
     elif (function == "predefined_prompts"):
         predefined_prompts = [
             "You visit a museum with ancient Greek artifacts. Which ancient Greek philosopher is known for his method of questioning and debate?",
@@ -155,7 +159,7 @@ def main(method, model_name, checkpoint_path, sparsity, start_num, end_num, toke
             "What is the capital of Germany?",
         ]
         for prompt in predefined_prompts:
-            generate(method, model, tokenizer, prompt, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p)
+            generate(method, model, tokenizer, prompt, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p, show_debug=False)
     else:
         raise ValueError("No function set: set --function")
 
