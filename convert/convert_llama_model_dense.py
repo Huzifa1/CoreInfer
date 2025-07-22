@@ -34,50 +34,12 @@ class CustomMLPLayer(nn.Module):
 
     def forward(self, x):
         device = torch.device("cpu") if self.cpu_only else torch.device("cuda")
-        global indices_list_all
-
-        if x.size(1)>1:
-            self.weight_updated = False
-            true_value = x @ self.weight.T.to(device)
-
-            if "down" in self.name:
-                # squeezed_x = x.clone().squeeze()
-                # indices_all = common.get_core_neurons(squeezed_x, self.token_sparsity, self.sparsity, self.weight.size(1))
-
-                # if self.memory_limit:
-                #     self.weight = self.weight.cpu()
-                #     self.filtered_W = torch.zeros_like(self.weight).cuda().to(torch.float16)
-
-                indices_all = torch.arange(0, x.shape[2]).cpu()
-                # self.filtered_W = self.weight[:, indices_all].clone().to(device)
-                self.filtered_W = self.weight[:, indices_all].to(device)
-                
-                if self.num == (self.start_num + 1):
-                    indices_list_all=[]
-                    
-                indices_list_all.append(indices_all)
-
-                self.weight = self.weight.cpu()
-        else:
-            if "down" not in self.name:
-                if not self.weight_updated:
-                    indices = indices_list_all[self.num - (self.start_num + 1)]
-                    self.filtered_W = self.weight[indices,:].clone().to(device)
-                    if self.memory_limit:
-                        self.weight = self.weight.cpu()
-                    self.weight_updated = True
-
-            true_value = x @ self.filtered_W.T
-            
+        true_value = x @ self.weight.T.to(device)
+        # torch.cuda.synchronize()
         return true_value
 
 
 def convert_llama_model_dense(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only):
-    return model
-
-    start_num = 0
-    end_num = 31
-    
     for name, module in tqdm(model.named_modules(), desc="Convert Llama Models"):
         if "down" in name or "up" in name or "gate" in name:
             num=int(name.split('.')[2])

@@ -14,7 +14,7 @@ class CustomMLPLayer(nn.Module):
     def __init__(self, weight, num, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, name, original_neurons_num, siot_method_config):
         super(CustomMLPLayer, self).__init__()
         
-        device = torch.device("cpu") if memory_limit or cpu_only else torch.device("cuda")
+        self.device = torch.device("cpu") if memory_limit or cpu_only else torch.device("cuda")
         
         neuron_num = round(original_neurons_num * sparsity)
         if "down" in name:
@@ -81,7 +81,11 @@ class CustomMLPLayer(nn.Module):
                 common.reorder_tensor(self.weight, indices_all)
                 self.is_reorderd = True
                 end_index = indices_all.shape[0]
-                self.filtered_W = self.weight[:, 0:end_index]
+                if (self.device == torch.device("cuda")):
+                    self.filtered_W = self.weight[:, 0:end_index].contiguous()
+                else:
+                    self.filtered_W = self.weight[:, 0:end_index]
+                    
                 
                 if self.num == (self.start_num + 1):
                     indices_list_all=[]
@@ -98,7 +102,10 @@ class CustomMLPLayer(nn.Module):
                     common.reorder_tensor(self.weight, indices, is_reverse=True)
                     self.is_reorderd = True
                     end_index = indices.shape[0]
-                    self.filtered_W = self.weight[0:end_index, :]
+                    if (self.device == torch.device("cuda")):
+                        self.filtered_W = self.weight[0:end_index, :].contiguous()
+                    else:
+                        self.filtered_W = self.weight[0:end_index, :]
                     self.weight_updated = True
                     
             
