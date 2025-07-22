@@ -52,7 +52,7 @@ def evaluate(model, tokenizer, num_tokens_to_generate, device):
 
 def main(method, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, prompt, memory_limit, num_fewshot, task_type, num_tokens_to_generate, device, sampling_method, siot_method_config, cluster_path = None, cpu_only = False, top_p = None, sparsity_levels_path = None, hybrid_split = None, model_neurons_filepath = None):
     
-    if (USE_SIOT_IMPROVEMENTS and method == "siot"):
+    if (USE_SIOT_IMPROVEMENTS and method in ["siot", "dense"]):
         create_neurons_mask.main(start_num, end_num, siot_method_config)
         script_dir = os.path.dirname(os.path.abspath(__file__))
         
