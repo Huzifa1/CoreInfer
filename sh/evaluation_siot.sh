@@ -6,9 +6,9 @@ END_NUM=26
 BASE_NEURONS_PERCENT=0.3
 BASE_NEURONS_TYPE="dataset"
 LOADED_NEURONS_PERCENT=0.7
-MODEL_NEURONS_FILEPATH="neurons/llama3-3b_model_neurons.json"
-DATASET_NEURONS_FILEPATH="neurons/qa.json"
-MASK_FILEPATH="neurons/mask.pkl"
+MODEL_NEURONS_FILEPATH="neurons_files/llama3-3b_model_neurons.json"
+DATASET_NEURONS_FILEPATH="neurons_files/qa.json"
+MASK_FILEPATH="neurons_files/mask.pkl"
 
 
 DIR_PATH="$(cd .. && pwd)"
@@ -34,14 +34,14 @@ run()
 for TASK_NAME in "triviaqa" "squadv2" "wmt16-de-en" "wmt16-ro-en" "xsum" "cnn_dailymail"; do
 
     if [ "$TASK_NAME" = "triviaqa" ] || [ "$TASK_NAME" = "squadv2" ]; then
-        DATASET_NEURONS_FILEPATH="neurons/qa.json"
+        DATASET_NEURONS_FILEPATH="neurons_files/qa.json"
     elif [ "$TASK_NAME" = "wmt16-de-en" ] || [ "$TASK_NAME" = "wmt16-ro-en" ]; then
-        DATASET_NEURONS_FILEPATH="neurons/translate.json"
+        DATASET_NEURONS_FILEPATH="neurons_files/translate.json"
     elif [ "$TASK_NAME" = "xsum" ] || [ "$TASK_NAME" = "cnn_dailymail" ]; then
-        DATASET_NEURONS_FILEPATH="neurons/summarize.json"
+        DATASET_NEURONS_FILEPATH="neurons_files/summarize.json"
     fi
 
-    FILE_NAME="task_specific.json"
+    FILE_NAME="default.json"
     run
 done
 

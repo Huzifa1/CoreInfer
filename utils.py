@@ -91,32 +91,6 @@ def generate_few_shot_summarize(num_fewshot):
 
 
 
-
-
-
-
-
-
-
-
-def process_prompt_similarity(prompt, task_type):
-    if task_type == 'QA':
-        final_prompt = 'Question:' + prompt + 'Answer:'
-        
-    elif task_type == 'Summarize':
-        pre_prompt = 'Summarize the following document: '
-        final_prompt = pre_prompt + prompt
-        
-    elif task_type == 'translate_de_en':
-        final_prompt = 'German phrase:' + prompt + '\nEnglish phrase:'
-
-    else:
-        print("Task_type must be one of QA and translate_de_en")
-    
-    return final_prompt
-
-
-
 def process_data(dataset, dataset_name):
     
     if dataset_name == "truthful_qa":

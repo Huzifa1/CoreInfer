@@ -1,5 +1,0 @@
-#!/bin/sh
-
-DATE='2025_05_14_13_28'
-TASK_NAME=wmt16-de-en
-LIMIT=200

@@ -1,21 +1,8 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from datasets import load_from_disk
 from convert.convert_opt_model import convert_opt_model
-from convert.convert_opt_model_sim import convert_opt_model_sim
-from convert.convert_opt_model_model_neurons import convert_opt_model_model_neurons
 from convert.convert_llama_model import convert_llama_model
-from convert.convert_llama_model_sim import convert_llama_model_sim
-
 from convert.convert_llama_model_siot import convert_llama_model_siot
-from convert.convert_llama_model_score import convert_llama_model_score
-from convert.convert_llama_model_dynamic_cut import convert_llama_model_dynamic_cut
-from convert.convert_llama_model_dynamic_cut_ci import convert_llama_model_dynamic_cut_ci
-from convert.convert_llama_model_static_cut import convert_llama_model_static_cut
-from convert.convert_llama_model_moving_cut import convert_llama_model_moving_cut
-from convert.convert_llama_model_model_neurons import convert_llama_model_model_neurons
-from convert.convert_llama_model_hybrid_neurons import convert_llama_model_hybrid_neurons
-# from convert.convert_llama_model_dense import convert_llama_model_dense
-# from convert.convert_opt_model_dense import convert_opt_model_dense
 
 from utils import *
 from sklearn.cluster import KMeans
@@ -88,42 +75,22 @@ def load_model(model_name, start_num, end_num, checkpoint_path, device, memory_l
     print(f"Done. Loaded model in {elapsed_time:.2f} seconds.\n")
     return model, tokenizer, num_layers
 
-def convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, siot_method_config, cluster_path=None, cpu_only = False, sparsity_levels_path=None, hybrid_split = None, model_neurons_filepath = None):
+def convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, siot_method_config, cpu_only = False):
     start_time = time.time()
 
     if "opt" in model_name:
         if method == 'stable_guided':
-            model = convert_opt_model(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, sparsity_levels_path)
-        elif method == 'similarity_guided':
-            model = convert_opt_model_sim(model, num_layers, sparsity, start_num, end_num, memory_limit, cluster_path, cpu_only)
-        # elif method == 'dense':
-        #     model = convert_opt_model_dense(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
-        elif method == 'model_neurons':
-            model = convert_opt_model_model_neurons(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
+            model = convert_opt_model(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
+        elif method == 'dense':
+            pass
 
     elif "llama" in model_name.lower():
         if method == 'stable_guided':
-            model = convert_llama_model(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, sparsity_levels_path)
-        elif method == 'similarity_guided':
-            model = convert_llama_model_sim(model, num_layers, sparsity, start_num, end_num, memory_limit, cluster_path, cpu_only)
-        elif method == 'dynamic_cut':
-            model = convert_llama_model_dynamic_cut(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
-        elif method == 'dynamic_cut_ci':
-            model = convert_llama_model_dynamic_cut_ci(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
-        elif method == 'static_cut':
-            model = convert_llama_model_static_cut(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
-        # elif method == 'dense':
-        #     model = convert_llama_model_dense(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
-        elif method == 'moving_cut':
-            model = convert_llama_model_moving_cut(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
-        elif method == 'score':
-            model = convert_llama_model_score(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
+            model = convert_llama_model(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
         elif method == 'siot':
             model = convert_llama_model_siot(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, MODEL_INFO[model_name]["num_neurons"], siot_method_config)
-        elif method == 'model_neurons':
-            model = convert_llama_model_model_neurons(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, model_neurons_filepath)
-        elif method == 'hybrid_neurons':
-            model = convert_llama_model_hybrid_neurons(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, hybrid_split, model_neurons_filepath)
+        elif method == 'dense':
+            pass
      
     print(f"Converting model {model_name} using method {method}...")
     end_time = time.time()

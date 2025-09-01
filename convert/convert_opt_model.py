@@ -78,13 +78,9 @@ class ReduceLayer_fc2(nn.Module):
         return true_value
 
 
-def convert_opt_model(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, sparsity_levels_path):
+def convert_opt_model(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only):
     
-    sparsity_levels = None
-    if sparsity_levels_path is not None:
-        with open(sparsity_levels_path, 'rb') as f:
-            sparsity_levels = pickle.load(f)
-    
+
     for name, module in tqdm(model.named_modules(), desc="Convert Opt Models"):
         if "fc1" in name or "fc2" in name:
             num=int(name.split('.')[3])
@@ -95,9 +91,6 @@ def convert_opt_model(model, sparsity, start_num, end_num, token_sparsity, memor
                     parent = dict(model.named_modules())[parent_name]
                 else:
                     parent = model # for lm_head
-                    
-                if sparsity_levels is not None:
-                    sparsity = sparsity_levels[num]
                     
                 if "fc1" in name:
                     NewLayer = ReduceLayer(module.weight, module.bias, sparsity, token_sparsity, memory_limit, cpu_only, num)

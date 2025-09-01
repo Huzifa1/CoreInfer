@@ -7,7 +7,6 @@ import common
 import pickle
 
 indices_list_all = []
-previous_indices_list_all = []
 
 class CustomMLPLayer(nn.Module):
     def __init__(self, weight, num, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, name):
@@ -17,11 +16,13 @@ class CustomMLPLayer(nn.Module):
 
         if "down" in name:
             neuron_num = int(weight.size(1) * sparsity)
+            self.filtered_W = torch.zeros((weight.size(0),neuron_num)).to(torch.float16).to(device)
         else:
             neuron_num = int(weight.size(0) * sparsity)
+            self.filtered_W = torch.zeros((neuron_num, weight.size(1))).to(torch.float16).to(device)
 
 
-        self.weight = weight.contiguous().to(device)
+        self.weight = weight.clone().to(device)
         self.num = num
         self.name = name
         self.token_sparsity = token_sparsity
@@ -30,49 +31,43 @@ class CustomMLPLayer(nn.Module):
         self.start_num = start_num
         self.end_num = end_num
         self.neuron_num = neuron_num
-        self.memory_limit = memory_limit
-        self.is_reorderd = False
-     
+        self.memory_limit = memory_limit        
+        
+
     def forward(self, x):
-        global indices_list_all, previous_indices_list_all
+        device = torch.device("cpu") if self.cpu_only else torch.device("cuda")
+        global indices_list_all
+        global ind_counter
 
         if x.size(1)>1:
             self.weight_updated = False
-            
-            if self.is_reorderd:
-                indices = previous_indices_list_all[self.num - (self.start_num + 1)]
-                common.reorder_tensor(self.weight, indices, is_reverse="down" not in self.name, is_restore=True)
-            
-            true_value = x @ self.weight.T
+            true_value = x @ self.weight.T.to(device)
 
             if "down" in self.name:
-                squeezed_x = x.squeeze()
+                squeezed_x = x.clone().squeeze()
                 indices_all = common.get_core_neurons(squeezed_x, self.token_sparsity, self.sparsity, self.weight.size(1))
-                
-                common.reorder_tensor(self.weight, indices_all)
-                self.is_reorderd = True
-                end_index = indices_all.shape[0]
-                self.filtered_W = self.weight[:, 0:end_index]
+                                
+                if self.memory_limit:
+                    self.weight = self.weight.cpu()
+                    self.filtered_W = torch.zeros_like(self.weight).cuda().to(torch.float16)
+
+                self.filtered_W = self.weight[:, indices_all].clone().to(device)
                 
                 if self.num == (self.start_num + 1):
-                    indices_list_all = []
-                        
+                    indices_list_all=[]
+               
                 indices_list_all.append(indices_all)
-                
-                if self.num == self.end_num - 1:
-                    previous_indices_list_all = indices_list_all.copy()
- 
 
+                self.weight = self.weight.cpu()
         else:
             if "down" not in self.name:
                 if not self.weight_updated:
                     indices = indices_list_all[self.num - (self.start_num + 1)]
-                    common.reorder_tensor(self.weight, indices, is_reverse=True)
-                    self.is_reorderd = True
-                    end_index = indices.shape[0]
-                    self.filtered_W = self.weight[0:end_index, :]
+                    self.filtered_W = self.weight[indices,:].clone().to(device)
+                    if self.memory_limit:
+                        self.weight = self.weight.cpu()
                     self.weight_updated = True
-                    
+
             true_value = x @ self.filtered_W.T
         return true_value
 
