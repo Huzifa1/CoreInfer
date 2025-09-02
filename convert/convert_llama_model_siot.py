@@ -4,7 +4,6 @@ import gc
 import torch
 from tqdm import tqdm
 import common
-import pickle
 from transformers.siot_variables.siot_improvements import USE_SIOT_IMPROVEMENTS
 
 indices_list_all = []
@@ -119,7 +118,6 @@ def convert_llama_model_siot(model, sparsity, start_num, end_num, token_sparsity
     if not USE_SIOT_IMPROVEMENTS:
         raise RuntimeError("SIOT Improvements / partial loading needs to be activated for siot Method")
     
-    custom_layers = []
     for name, module in tqdm(model.named_modules(), desc="Convert Llama Models"):
         if "down" in name or "up" in name or "gate" in name:
             num=int(name.split('.')[2])
@@ -134,10 +132,7 @@ def convert_llama_model_siot(model, sparsity, start_num, end_num, token_sparsity
                 NewLayer = CustomMLPLayer(module.weight, num, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, name, original_neurons_num, siot_method_config)
                 setattr(parent, attr_name, NewLayer)
                 del module
-                custom_layers.append(NewLayer)
 
-    gc.collect()
-    model.custom_layers = custom_layers
-    
+    gc.collect()    
     
     return model

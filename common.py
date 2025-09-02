@@ -3,6 +3,7 @@ from datasets import load_from_disk
 from convert.convert_opt_model import convert_opt_model
 from convert.convert_llama_model import convert_llama_model
 from convert.convert_llama_model_siot import convert_llama_model_siot
+from convert.convert_opt_model_siot import convert_opt_model_siot
 
 from utils import *
 from sklearn.cluster import KMeans
@@ -81,6 +82,8 @@ def convert_model(method, model, model_name, num_layers, sparsity, start_num, en
     if "opt" in model_name:
         if method == 'stable_guided':
             model = convert_opt_model(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
+        elif method == 'siot':
+            model = convert_opt_model_siot(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, MODEL_INFO[model_name]["num_neurons"], siot_method_config)
         elif method == 'dense':
             pass
 

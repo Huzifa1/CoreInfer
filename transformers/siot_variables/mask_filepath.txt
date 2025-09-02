@@ -1,1 +1,1 @@
-/local/huzaifa/CoreInfer/neurons/masktriviaqa.pkl
+/local/huzaifa/CoreInfer/neurons/mask.pkl
