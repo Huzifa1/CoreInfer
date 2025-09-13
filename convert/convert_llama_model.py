@@ -21,7 +21,6 @@ class CustomMLPLayer(nn.Module):
             neuron_num = int(weight.size(0) * sparsity)
             self.filtered_W = torch.zeros((neuron_num, weight.size(1))).to(torch.float16).to(device)
 
-
         self.weight = weight.clone().to(device)
         self.num = num
         self.name = name
@@ -72,14 +71,8 @@ class CustomMLPLayer(nn.Module):
         return true_value
 
 
-def convert_llama_model(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, sparsity_levels_path):
-    custom_layers = []
+def convert_llama_model(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only):
     
-    sparsity_levels = None
-    if sparsity_levels_path is not None:
-        with open(sparsity_levels_path, 'rb') as f:
-            sparsity_levels = pickle.load(f)
-
     for name, module in tqdm(model.named_modules(), desc="Convert Llama Models"):
         if "down" in name or "up" in name or "gate" in name:
             num=int(name.split('.')[2])
@@ -90,15 +83,10 @@ def convert_llama_model(model, sparsity, start_num, end_num, token_sparsity, mem
                     parent = dict(model.named_modules())[parent_name]
                 else:
                     parent = model # for lm_head
-                    
-                if sparsity_levels is not None:
-                    sparsity = sparsity_levels[num]
 
                 NewLayer = CustomMLPLayer(module.weight, num, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, name)
                 setattr(parent, attr_name, NewLayer)
                 del module
-                custom_layers.append(NewLayer)
 
     gc.collect()
-    model.custom_layers = custom_layers
     return model
