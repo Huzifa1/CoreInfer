@@ -2,10 +2,10 @@
 DIR_PATH="$(cd .. && pwd)"
 
 # Tunable Params
-METHOD="stable_guided"
+METHOD="siot"
 MODEL_NAME="llama3-3b"
 LIMIT=10000000
-FILE_PREFIX_NAME="coreinfer_random_loading"
+FILE_PREFIX_NAME="default"
 USE_SIOT_IMPROVEMENTS=True
 TOKEN_SPARSITY=0.2
 SPARSITY=0.4
@@ -13,12 +13,12 @@ SPARSITY=0.4
 # SIOT Method Variables: 
 START_NUM=4
 END_NUM=26
-BASE_NEURONS_PERCENT=0.7
-BASE_NEURONS_TYPE="model"
+BASE_NEURONS_PERCENT=0.3
+BASE_NEURONS_TYPE="dataset"
 LOADED_NEURONS_PERCENT=0.7
-MODEL_NEURONS_FILEPATH="neurons_files/${MODEL_NAME}/random_neurons.json"
+MODEL_NEURONS_FILEPATH="neurons_files/${MODEL_NAME}/model_neurons.json"
 DATASET_NEURONS_FILEPATH="neurons_files/${MODEL_NAME}/qa.json"
-MASK_FILEPATH="neurons_files/mask2.pkl"
+MASK_FILEPATH="neurons_files/mask.pkl"
 
 run()
 {
@@ -31,9 +31,9 @@ run()
 }
 
 
-for TASK_NAME in mlqa_en_en; do # "triviaqa" "squadv2" "wmt16-de-en" "wmt16-ro-en" "xsum" "cnn_dailymail"
+for TASK_NAME in "triviaqa" "squadv2" "wmt16-de-en" "wmt16-ro-en" "xsum" "cnn_dailymail"; do
 
-    if [ "$TASK_NAME" = "triviaqa" ] || [ "$TASK_NAME" = "squadv2" ] || [ "$TASK_NAME" = "piqa" ] || [ "$TASK_NAME" = "mlqa_en_en" ]; then
+    if [ "$TASK_NAME" = "triviaqa" ] || [ "$TASK_NAME" = "squadv2" ]; then
         DATASET_NEURONS_FILEPATH="neurons_files/$MODEL_NAME/qa.json"
     elif [ "$TASK_NAME" = "wmt16-de-en" ] || [ "$TASK_NAME" = "wmt16-ro-en" ]; then
         DATASET_NEURONS_FILEPATH="neurons_files/$MODEL_NAME/translate.json"
