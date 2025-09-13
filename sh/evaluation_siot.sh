@@ -26,7 +26,7 @@ run()
     cd $DIR_PATH/evaluation
     OUT_DIR="$DIR_PATH/results/${METHOD}_results/$TASK_NAME/results[$LIMIT]"
     mkdir -p $OUT_DIR
-    python evaluate_task.py --model_name $MODEL_NAME --checkpoint_path /local/huzaifa/workspace/models/$MODEL_NAME/ --limit $LIMIT --task_name $TASK_NAME --output_path "$OUT_DIR/${FILE_NAME}" --token_sparsity $TOKEN_SPARSITY --sparsity $SPARSITY --method $METHOD --start_num $START_NUM --end_num $END_NUM --base_neurons_percent $BASE_NEURONS_PERCENT --base_neurons_type $BASE_NEURONS_TYPE --loaded_neurons_percent $LOADED_NEURONS_PERCENT --model_neurons_filepath $MODEL_NEURONS_FILEPATH --dataset_neurons_filepath $DATASET_NEURONS_FILEPATH --mask_filepath $MASK_FILEPATH
+    python evaluate_task.py --model_name $MODEL_NAME --checkpoint_path $DIR_PATH/models/$MODEL_NAME/ --limit $LIMIT --task_name $TASK_NAME --output_path "$OUT_DIR/${FILE_NAME}" --token_sparsity $TOKEN_SPARSITY --sparsity $SPARSITY --method $METHOD --start_num $START_NUM --end_num $END_NUM --base_neurons_percent $BASE_NEURONS_PERCENT --base_neurons_type $BASE_NEURONS_TYPE --loaded_neurons_percent $LOADED_NEURONS_PERCENT --model_neurons_filepath $MODEL_NEURONS_FILEPATH --dataset_neurons_filepath $DATASET_NEURONS_FILEPATH --mask_filepath $MASK_FILEPATH
     cd -
 }
 
