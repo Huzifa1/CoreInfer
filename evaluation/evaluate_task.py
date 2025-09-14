@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from utils import *
 from common import *
 import json
-from transformers.siot import USE_SIOT_IMPROVEMENTS
+from CoreInfer.transformers.partinfer import USE_PARTINFER_IMPROVEMENTS
 import create_neurons_mask
 
 default_device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -38,7 +38,7 @@ def evaluate(task_name, model, tokenizer, num_fewshot, limit, output_path, confi
     
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     result_dict = results['results']
-    if (USE_SIOT_IMPROVEMENTS):
+    if (USE_PARTINFER_IMPROVEMENTS):
         result_dict["mask_name"] = MASK_FILEPATH
         result_dict["config"] = config
     command_str = f"Command: {' '.join(sys.argv)}"
@@ -47,27 +47,27 @@ def evaluate(task_name, model, tokenizer, num_fewshot, limit, output_path, confi
         json.dump(result_dict, file, cls=PathEncoder)
 
 
-def main(method, task_name, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, memory_limit, device, num_fewshot, limit, output_path, siot_method_config, cpu_only = None):
+def main(method, task_name, model_name, checkpoint_path, sparsity, start_num, end_num, token_sparsity, memory_limit, device, num_fewshot, limit, output_path, partinfer_method_config, cpu_only = None):
     
-    if (USE_SIOT_IMPROVEMENTS):
-        create_neurons_mask.main(start_num, end_num, siot_method_config)
+    if (USE_PARTINFER_IMPROVEMENTS):
+        create_neurons_mask.main(start_num, end_num, partinfer_method_config)
         script_dir = os.path.dirname(os.path.abspath(__file__))
         parent_dir = os.path.dirname(script_dir)
         
-        with open(f"{parent_dir}/transformers/siot_variables/mask_filepath.txt", "r") as f:
+        with open(f"{parent_dir}/transformers/partinfer_variables/mask_filepath.txt", "r") as f:
             MASK_FILEPATH = f.readlines()[0]
-        print(f"SIOT: Use Mask for partial loading, mask file: {MASK_FILEPATH}") 
+        print(f"PARTINFER: Use Mask for partial loading, mask file: {MASK_FILEPATH}") 
     
     model, tokenizer, num_layers = load_model(model_name, start_num, end_num, checkpoint_path, device, memory_limit)
     
-    model = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, siot_method_config, cpu_only)
+    model = convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, partinfer_method_config, cpu_only)
         
     config = {
         "sparsity": sparsity,
         "start_num": start_num,
         "end_num": end_num,
         "token_sparsity": token_sparsity,
-        "siot_method_config": siot_method_config
+        "partinfer_method_config": partinfer_method_config
     }
     evaluate(task_name, model, tokenizer, num_fewshot, limit, output_path, config)
     
@@ -87,11 +87,11 @@ if __name__ == '__main__':
     parser.add_argument('--limit', type=int, default=1000, help='Max number of samples to evaluate.')
     parser.add_argument('--token_sparsity', type=float, default=0.2, help='Token Sparsity level.')
     parser.add_argument('--memory_limit', action='store_true', help='Enable memory limit.')
-    parser.add_argument('--method', type=str, choices=['stable_guided', 'dense', 'siot'], default='siot', help='Method to use (default: siot).')
+    parser.add_argument('--method', type=str, choices=['coreinfer', 'dense', 'partinfer'], default='partinfer', help='Method to use (default: partinfer).')
     parser.add_argument('--output_path', type=Path, default=None, help='Path to output file.')
     parser.add_argument('--cpu_only', action='store_true', help='Run inference on CPU only.')
     
-    ## SIOT Method arguments
+    ## PARTINFER Method arguments
     parser.add_argument('--base_neurons_percent', type=float, default=0.4, help='Loaded Base Neurons Percent')
     parser.add_argument('--base_neurons_type', type=str, choices=['model', 'dataset'], default='model', help='Base Neurons Type')
     parser.add_argument('--loaded_neurons_percent', type=float, default=0.7, help='Overall Percent of Loaded Neurons')
@@ -118,7 +118,7 @@ if __name__ == '__main__':
     print(f"Use filename {args.output_path}\n")
     
     
-    siot_method_config = {
+    partinfer_method_config = {
         "base_neurons_percent": args.base_neurons_percent,
         "base_neurons_type": args.base_neurons_type,
         "loaded_neurons_percent": args.loaded_neurons_percent,
@@ -127,7 +127,7 @@ if __name__ == '__main__':
         "mask_filepath": args.mask_filepath
     }
     
-    main(args.method, args.task_name, args.model_name, args.checkpoint_path, args.sparsity, args.start_num, args.end_num, args.token_sparsity, args.memory_limit, args.device, args.num_fewshot, args.limit, args.output_path, siot_method_config, args.cpu_only)
+    main(args.method, args.task_name, args.model_name, args.checkpoint_path, args.sparsity, args.start_num, args.end_num, args.token_sparsity, args.memory_limit, args.device, args.num_fewshot, args.limit, args.output_path, partinfer_method_config, args.cpu_only)
 
 
     

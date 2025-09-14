@@ -39,7 +39,7 @@ def create_mask(start_num, end_num, base_neurons_percent, base_neurons_type, loa
     with open(f"{current_dir}/{mask_filepath}", "wb") as f:
         pickle.dump(neurons_to_load, f)
         
-    with open(f"{current_dir}/transformers/siot_variables/mask_filepath.txt", "w") as f:
+    with open(f"{current_dir}/transformers/partinfer_variables/mask_filepath.txt", "w") as f:
         f.write(f'{current_dir}/{mask_filepath}')
     
     
@@ -54,8 +54,8 @@ def load_neurons_tensor(neurons_filepath):
 
     return torch.tensor(neurons)
 
-def main(start_num, end_num, siot_method_config):
-    base_neurons_percent, base_neurons_type, loaded_neurons_percent, model_neurons_filepath, dataset_neurons_filepath, mask_filepath = siot_method_config.values()
+def main(start_num, end_num, partinfer_method_config):
+    base_neurons_percent, base_neurons_type, loaded_neurons_percent, model_neurons_filepath, dataset_neurons_filepath, mask_filepath = partinfer_method_config.values()
     if base_neurons_type not in ["model", "dataset"]:
         raise RuntimeError("base_neurons_type must be either set to 'model' or 'dataset'")
     

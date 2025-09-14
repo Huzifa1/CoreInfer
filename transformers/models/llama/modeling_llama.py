@@ -23,7 +23,7 @@ import torch
 import torch.utils.checkpoint
 from torch import nn
 
-from ...siot import get_used_neurons_count, USE_SIOT_IMPROVEMENTS
+from ...partinfer import get_used_neurons_count, USE_PARTINFER_IMPROVEMENTS
 from ...activations import ACT2FN
 from ...cache_utils import Cache, DynamicCache, StaticCache
 from ...generation import GenerationMixin
@@ -511,8 +511,8 @@ class LlamaModel(LlamaPreTrainedModel):
         #     [LlamaDecoderLayer(config, layer_idx) for layer_idx in range(config.num_hidden_layers)]
         # )
         
-        # SIoT
-        if USE_SIOT_IMPROVEMENTS:
+        # PARTINFER
+        if USE_PARTINFER_IMPROVEMENTS:
             llama_decode_layers = []
             for layer_idx in range(config.num_hidden_layers):
                 neuron_count = get_used_neurons_count(layer_idx)

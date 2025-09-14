@@ -2,8 +2,8 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from datasets import load_from_disk
 from convert.convert_opt_model import convert_opt_model
 from convert.convert_llama_model import convert_llama_model
-from convert.convert_llama_model_siot import convert_llama_model_siot
-from convert.convert_opt_model_siot import convert_opt_model_siot
+from CoreInfer.convert.convert_llama_model_partinfer import convert_llama_model_partinfer
+from CoreInfer.convert.convert_opt_model_partinfer import convert_opt_model_partinfer
 
 from utils import *
 from sklearn.cluster import KMeans
@@ -76,22 +76,22 @@ def load_model(model_name, start_num, end_num, checkpoint_path, device, memory_l
     print(f"Done. Loaded model in {elapsed_time:.2f} seconds.\n")
     return model, tokenizer, num_layers
 
-def convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, siot_method_config, cpu_only = False):
+def convert_model(method, model, model_name, num_layers, sparsity, start_num, end_num, token_sparsity, memory_limit, partinfer_method_config, cpu_only = False):
     start_time = time.time()
 
     if "opt" in model_name:
-        if method == 'stable_guided':
+        if method == 'coreinfer':
             model = convert_opt_model(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
-        elif method == 'siot':
-            model = convert_opt_model_siot(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, MODEL_INFO[model_name]["num_neurons"], siot_method_config)
+        elif method == 'partinfer':
+            model = convert_opt_model_partinfer(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, MODEL_INFO[model_name]["num_neurons"], partinfer_method_config)
         elif method == 'dense':
             pass
 
     elif "llama" in model_name.lower():
-        if method == 'stable_guided':
+        if method == 'coreinfer':
             model = convert_llama_model(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only)
-        elif method == 'siot':
-            model = convert_llama_model_siot(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, MODEL_INFO[model_name]["num_neurons"], siot_method_config)
+        elif method == 'partinfer':
+            model = convert_llama_model_partinfer(model, sparsity, start_num, end_num, token_sparsity, memory_limit, cpu_only, MODEL_INFO[model_name]["num_neurons"], partinfer_method_config)
         elif method == 'dense':
             pass
      

@@ -23,7 +23,7 @@ import torch.nn.functional as F
 import torch.utils.checkpoint
 from torch import Size, Tensor, nn
 
-from ...siot import USE_SIOT_IMPROVEMENTS, get_used_neurons_count
+from ...partinfer import USE_PARTINFER_IMPROVEMENTS, get_used_neurons_count
 from ...activations import ACT2FN
 from ...cache_utils import Cache, DynamicCache, StaticCache
 from ...generation import GenerationMixin
@@ -747,7 +747,7 @@ class NemotronModel(NemotronPreTrainedModel):
 
         self.embed_tokens = nn.Embedding(config.vocab_size, config.hidden_size, self.padding_idx)
         
-        if (USE_SIOT_IMPROVEMENTS):
+        if (USE_PARTINFER_IMPROVEMENTS):
             new_layers = []
             for layer_idx in range(config.num_hidden_layers):
                 config.intermediate_size = get_used_neurons_count(layer_idx)

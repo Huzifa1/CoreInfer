@@ -21,7 +21,7 @@ import torch.utils.checkpoint
 from torch import nn
 from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, MSELoss
 
-from ...siot import USE_SIOT_IMPROVEMENTS, get_used_neurons_count
+from ...partinfer import USE_PARTINFER_IMPROVEMENTS, get_used_neurons_count
 from ...activations import ACT2FN
 from ...cache_utils import Cache, DynamicCache, StaticCache
 from ...generation import GenerationMixin
@@ -625,8 +625,8 @@ class OPTDecoder(OPTPreTrainedModel):
         else:
             self.final_layer_norm = None
 
-        # SIOT
-        if USE_SIOT_IMPROVEMENTS:
+        # PARTINFER
+        if USE_PARTINFER_IMPROVEMENTS:
             opt_decoder_layers = []
             [OPTDecoderLayer(config, layer_idx=i) for i in range(config.num_hidden_layers)]
             for i in range(config.num_hidden_layers):

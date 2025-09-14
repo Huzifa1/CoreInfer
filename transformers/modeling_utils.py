@@ -45,7 +45,7 @@ from torch.distributions import constraints
 from torch.nn import CrossEntropyLoss, Identity
 from torch.utils.checkpoint import checkpoint
 
-from .siot import USE_SIOT_IMPROVEMENTS, get_used_neurons
+from .partinfer import USE_PARTINFER_IMPROVEMENTS, get_used_neurons
 from .activations import get_activation
 from .configuration_utils import PretrainedConfig
 from .dynamic_module_utils import custom_object_save
@@ -813,8 +813,8 @@ def _load_state_dict_into_meta_model(
             )
         else:
 
-            # SIOT: Filter param here
-            if (USE_SIOT_IMPROVEMENTS and ("mlp" in param_name or "fc" in param_name)):
+            # PARTINFER: Filter param here
+            if (USE_PARTINFER_IMPROVEMENTS and ("mlp" in param_name or "fc" in param_name)):
                 indices = get_used_neurons(param_name, is_loading=True)
                 # LLAMA
                 if ("mlp" in param_name):
