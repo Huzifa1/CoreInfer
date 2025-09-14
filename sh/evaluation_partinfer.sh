@@ -21,18 +21,21 @@ MASK_FILEPATH="neurons_files/mask.pkl"
 
 
 if [ "$METHOD" = "partinfer" ]; then
+    USE_PARTINFER_IMPROVEMENTS=True
     FILE_PREFIX_NAME="default"
-elif [ "$METHOD" = "dense" ]
-    if [ "$USE_PARTINFER_IMPROVEMENTS" = "True" ]
+elif [ "$METHOD" = "dense" ]; then
+    if [ "$USE_PARTINFER_IMPROVEMENTS" = "True" ]; then
         FILE_PREFIX_NAME="dense"
     else
         FILE_PREFIX_NAME="reference"
-elif [ "$METHOD" = "coreinfer" ]
-    if [ "$USE_PARTINFER_IMPROVEMENTS" = "True" ]
+    fi
+elif [ "$METHOD" = "coreinfer" ]; then
+    if [ "$USE_PARTINFER_IMPROVEMENTS" = "True" ]; then
         FILE_PREFIX_NAME="coreinfer_partial_loading"
     else
         FILE_PREFIX_NAME="coreinfer"
-elif [ "$METHOD" = "coreinfer_random_loading" ]
+    fi
+elif [ "$METHOD" = "coreinfer_random_loading" ]; then
     FILE_PREFIX_NAME="coreinfer_random_loading"
     METHOD="coreinfer"
     MODEL_NEURONS_FILEPATH="neurons_files/${MODEL_NAME}/random_neurons.json"
@@ -47,7 +50,7 @@ run()
     cd $DIR_PATH/evaluation
     OUT_DIR="$DIR_PATH/results/${METHOD}_results/$TASK_NAME/results[$LIMIT]"
     mkdir -p $OUT_DIR
-    if [ "$USE_PARTINFER_IMPROVEMENTS" = "True" ]
+    if [ "$USE_PARTINFER_IMPROVEMENTS" = "True" ]; then
         python evaluate_task.py --model_name $MODEL_NAME --checkpoint_path $DIR_PATH/models/$MODEL_NAME/ --limit $LIMIT --task_name $TASK_NAME --output_path "$OUT_DIR/${FILE_NAME}" --token_sparsity $TOKEN_SPARSITY --sparsity $SPARSITY --method $METHOD --start_num $START_NUM --end_num $END_NUM --base_neurons_percent $BASE_NEURONS_PERCENT --base_neurons_type $BASE_NEURONS_TYPE --loaded_neurons_percent $LOADED_NEURONS_PERCENT --model_neurons_filepath $MODEL_NEURONS_FILEPATH --dataset_neurons_filepath $DATASET_NEURONS_FILEPATH --mask_filepath $MASK_FILEPATH
     else
         python evaluate_task.py --model_name $MODEL_NAME --checkpoint_path $DIR_PATH/models/$MODEL_NAME/ --limit $LIMIT --task_name $TASK_NAME --output_path "$OUT_DIR/${FILE_NAME}" --token_sparsity $TOKEN_SPARSITY --sparsity $SPARSITY --method $METHOD --start_num $START_NUM --end_num $END_NUM
