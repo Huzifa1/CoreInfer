@@ -10,7 +10,7 @@ Our approach is split into 2 phase, offline (left) and online (right). During th
 
 ## Demo
 
-![Overview](assets/demp.mp4)
+![Demo](assets/demo.mp4)
 
 ## Install
 
