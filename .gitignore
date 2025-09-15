@@ -1,7 +1,8 @@
-.coreinfer/
-coreinfer/
+.partinfer/
+partinfer/
 dataset/
 models/
+models
 ignore/
 masks/
 !transformers/models/
