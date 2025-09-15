@@ -4,7 +4,7 @@ from pathlib import Path
 from utils import *
 from common import *
 from torch.nn.functional import softmax
-from CoreInfer.transformers.partinfer import USE_PARTINFER_IMPROVEMENTS
+from transformers.partinfer import USE_PARTINFER_IMPROVEMENTS
 import create_neurons_mask
 
 default_device = 'cuda' if torch.cuda.is_available() else 'cpu'

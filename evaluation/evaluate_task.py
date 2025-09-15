@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from utils import *
 from common import *
 import json
-from CoreInfer.transformers.partinfer import USE_PARTINFER_IMPROVEMENTS
+from transformers.partinfer import USE_PARTINFER_IMPROVEMENTS
 import create_neurons_mask
 
 default_device = 'cuda' if torch.cuda.is_available() else 'cpu'

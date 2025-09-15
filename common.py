@@ -2,8 +2,8 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from datasets import load_from_disk
 from convert.convert_opt_model import convert_opt_model
 from convert.convert_llama_model import convert_llama_model
-from CoreInfer.convert.convert_llama_model_partinfer import convert_llama_model_partinfer
-from CoreInfer.convert.convert_opt_model_partinfer import convert_opt_model_partinfer
+from convert.convert_llama_model_partinfer import convert_llama_model_partinfer
+from convert.convert_opt_model_partinfer import convert_opt_model_partinfer
 
 from utils import *
 from sklearn.cluster import KMeans
