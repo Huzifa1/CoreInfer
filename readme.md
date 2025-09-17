@@ -104,6 +104,7 @@ This are the available parameters for `partinfer.py`:
 - `--sampling-method`: `greedy` or `top-p`
 - `--token_sparsity`: Token Sparsity level
 - `--top_p`: used for top-p sampling
+- `--use_partial_loading`: add this parameter to enables partial loading from PartInfer, automatically enabled by `--method partinfer`
 
 This parameters are only used when using `--method partinfer`:
 - `--base_neurons_percent`: portion $\delta$ of base neurons, default to $0.3$
@@ -113,7 +114,7 @@ This parameters are only used when using `--method partinfer`:
 - `--base_neurons_type`: `model` to use model neurons as base neurons, `dataset` to set dataset neurons as base neurons, default to `dataset`
 - `--mask_filepath`: path for generation of mask file
 
-
+> When using otherf scripts, e.g. `evaluation/evaluate_task.py`, make sure in the file `transformers/partinfer_variables/partinfer_improvements.py` the variable ``USE_PARTINFER_IMPROVEMENTS`` is set to `True` to enable partial loading.
 
 ## Run Task Evaluation
 

@@ -84,3 +84,7 @@ desktop.ini
 *.pem
 *.key
 config.json
+
+
+neurons/mask.pkl
+transformers/partinfer_variables/*

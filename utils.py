@@ -1,6 +1,108 @@
 import torch
 import common
 from transformers import AutoModelForCausalLM
+from torch.nn.functional import softmax
+import time
+
+
+
+def greedy_sampling(next_token_logits, tokenizer, generated):
+    next_token_id = torch.argmax(next_token_logits, dim=-1)
+    generated = torch.cat((generated, next_token_id.unsqueeze(-1)), dim=1)
+    next_token_text = tokenizer.decode(next_token_id)
+
+    return generated, next_token_id, next_token_text
+
+def top_p_sampling(next_token_logits, tokenizer, top_p, generated):
+    # Apply softmax to get probabilities
+    probabilities = softmax(next_token_logits, dim=-1)
+
+    # Sort tokens by probability
+    sorted_probs, sorted_indices = torch.sort(probabilities, descending=True)
+
+    # Compute cumulative probabilities
+    cumulative_probs = torch.cumsum(sorted_probs, dim=-1)
+
+    # Keep only tokens within the top-p threshold
+    top_p_mask = cumulative_probs <= top_p
+    top_p_mask[..., 0] = True  # Ensure at least one token is always included
+
+    # Re-normalize the probabilities of the selected tokens
+    filtered_probs = sorted_probs * top_p_mask
+    filtered_probs /= filtered_probs.sum(dim=-1, keepdim=True)  # Avoid division by zero
+
+    # Sample from the filtered distribution
+    next_token_id = sorted_indices.gather(1, torch.multinomial(filtered_probs, num_samples=1))
+
+    # Ensure shape is [1, 1]
+    next_token_id = next_token_id.squeeze(-1).unsqueeze(1)
+
+    # Concatenate to generated sequence
+    generated = torch.cat((generated, next_token_id), dim=1)
+
+    next_token_text = tokenizer.decode(next_token_id.squeeze().tolist())    
+
+    return generated, next_token_id, next_token_text
+
+# Test Model
+def generate(method, model, tokenizer, ori_prompt, task_type, num_fewshot, num_tokens_to_generate, device, sampling_method, top_p, show_debug: bool = True):
+    model.eval()
+    if method in ['coreinfer', 'dense', 'partinfer']:
+        prompt = process_prompt_stable(ori_prompt, task_type, num_fewshot)
+        
+    input_ids = tokenizer.encode(prompt, return_tensors='pt').to(device)
+    prompt_token_length = input_ids.shape[-1]
+    if show_debug:
+        print(f"Prompt token length: {prompt_token_length}")
+    pre_fill_start_time = time.time()
+    if show_debug:
+        print("Starting the prefilling stage...", end="")
+    
+    eos_token_id = tokenizer.convert_tokens_to_ids('.')
+    with torch.no_grad():
+        outputs = model(input_ids, use_cache=True)
+        past_key_values = outputs.past_key_values
+    
+    pre_fill_end_time = time.time()
+    pre_fill_elapsed_time = pre_fill_end_time - pre_fill_start_time
+    if show_debug:
+        print(f"Done. Prefilling stage calculated in {pre_fill_elapsed_time:.2f} seconds.\n")
+
+    generated = input_ids
+    
+    print(ori_prompt) 
+    start_time = time.time()
+    counter = 0
+    for _ in range(num_tokens_to_generate):
+        with torch.no_grad():
+            outputs = model(input_ids=generated[:, -1:], past_key_values=past_key_values, use_cache=True)
+            logits = outputs.logits
+            past_key_values = outputs.past_key_values
+    
+        next_token_logits = logits[:, -1, :]
+
+        if sampling_method == "greedy":
+            generated, next_token_id, next_token_text = greedy_sampling(next_token_logits, tokenizer, generated)
+        elif sampling_method == "top-p":
+            generated, next_token_id, next_token_text = top_p_sampling(next_token_logits, tokenizer, top_p, generated)
+        
+        print(next_token_text, end='', flush=True)
+        if next_token_id.item() == eos_token_id:
+            break
+        if '.' in next_token_text:
+            break
+        counter += 1
+    end_time = time.time()
+    
+    num_generated_tokens = generated.size(1) - input_ids.size(1)
+    
+    elapsed_time = end_time - start_time
+    tokens_per_second = num_generated_tokens / elapsed_time
+    
+    if show_debug:
+        print(f'\n\nGenerated {num_generated_tokens} tokens in {elapsed_time:.2f} seconds.')
+        print(f'Decoding speed: {tokens_per_second:.2f} tokens/second')
+
 
 def process_prompt_stable(prompt, task_type, num_fewshot):
     if task_type == 'QA':

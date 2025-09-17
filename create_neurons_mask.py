@@ -55,7 +55,13 @@ def load_neurons_tensor(neurons_filepath):
     return torch.tensor(neurons)
 
 def main(start_num, end_num, partinfer_method_config):
-    base_neurons_percent, base_neurons_type, loaded_neurons_percent, model_neurons_filepath, dataset_neurons_filepath, mask_filepath = partinfer_method_config.values()
+    base_neurons_percent = partinfer_method_config["base_neurons_percent"]
+    base_neurons_type = partinfer_method_config["base_neurons_type"]
+    loaded_neurons_percent = partinfer_method_config["loaded_neurons_percent"]
+    model_neurons_filepath = partinfer_method_config["model_neurons_filepath"]
+    dataset_neurons_filepath = partinfer_method_config["dataset_neurons_filepath"]
+    mask_filepath = partinfer_method_config["mask_filepath"]
+    
     if base_neurons_type not in ["model", "dataset"]:
         raise RuntimeError("base_neurons_type must be either set to 'model' or 'dataset'")
     
