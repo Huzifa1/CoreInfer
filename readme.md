@@ -79,7 +79,7 @@ python download.py --model_name  $model --checkpoint_path /PATH/TO/SAVE/MODEL --
 
 To run inference using PartInfer, the `partinfer.py` file is used. This is an example command to run inference using model `llama3-3b` stored in folder `models/llama3-3b` with method `partinfer` in `chat` function:
 ```
-python partinfer.py --model_name 'llama3-3b' --checkpoint_path 'models/llama3-3b' --method partinfer --function predefined_prompts
+python partinfer.py --model_name 'llama3-3b' --checkpoint_path 'models/llama3-3b' --cpu_only --method partinfer --function predefined_prompts
 ```
 
 This are the available parameters for `partinfer.py`:
@@ -96,7 +96,7 @@ This are the available parameters for `partinfer.py`:
 - `--sparsity`: set portion of neurons to compute ($\phi = \delta + \epsilon$), default to $0.4$
 - `--task_type`: ``QA``, ``Summarize``, ``translate_de_en``
 - `--prompt`: prompt for `normal` function
-- `--device`: device to use
+- `--device`: device to use, default to `cuda` for NVIDIA GPU
 - `--cpu_only`: add this parameter to only use the cpu for inference
 - `--start_num`: first layer to apply PartInfer, default to $3$
 - `--end_num`: last layer to apply PartInfer, default to $25$
@@ -105,6 +105,7 @@ This are the available parameters for `partinfer.py`:
 - `--token_sparsity`: Token Sparsity level
 - `--top_p`: used for top-p sampling
 - `--use_partial_loading`: add this parameter to enables partial loading from PartInfer, automatically enabled by `--method partinfer`
+> Caution: parameter `--cpu_only` needs to be added if CUDA GPU is not available
 
 This parameters are only used when using `--method partinfer`:
 - `--base_neurons_percent`: portion $\delta$ of base neurons, default to $0.3$
