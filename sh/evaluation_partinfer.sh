@@ -15,9 +15,9 @@ END_NUM=25
 BASE_NEURONS_PERCENT=0.3
 BASE_NEURONS_TYPE="dataset"
 LOADED_NEURONS_PERCENT=0.7
-MODEL_NEURONS_FILEPATH="neurons_files/${MODEL_NAME}/model_neurons.json"
-DATASET_NEURONS_FILEPATH="neurons_files/${MODEL_NAME}/qa.json"
-MASK_FILEPATH="neurons_files/mask.pkl"
+MODEL_NEURONS_FILEPATH="neuron_files/${MODEL_NAME}/model_neurons.json"
+DATASET_NEURONS_FILEPATH="neuron_files/${MODEL_NAME}/qa.json"
+MASK_FILEPATH="neuron_files/mask.pkl"
 
 
 if [ "$METHOD" = "partinfer" ]; then
@@ -38,7 +38,7 @@ elif [ "$METHOD" = "coreinfer" ]; then
 elif [ "$METHOD" = "coreinfer_random_loading" ]; then
     FILE_PREFIX_NAME="coreinfer_random_loading"
     METHOD="coreinfer"
-    MODEL_NEURONS_FILEPATH="neurons_files/${MODEL_NAME}/random_neurons.json"
+    MODEL_NEURONS_FILEPATH="neuron_files/${MODEL_NAME}/random_neurons.json"
     BASE_NEURONS_PERCENT=$LOADED_NEURONS_PERCENT
     BASE_NEURONS_TYPE="model"
     USE_PARTINFER_IMPROVEMENTS=True
@@ -63,11 +63,11 @@ run()
 for TASK_NAME in "triviaqa" "squadv2" "piqa" "mlqa_en_en" "wmt16-de-en" "wmt16-ro-en" "cnn_dailymail" "xsum"; do
 
     if [ "$TASK_NAME" = "triviaqa" ] || [ "$TASK_NAME" = "squadv2" ] || [ "$TASK_NAME" = "piqa" ] || [ "$TASK_NAME" = "mlqa_en_en" ]; then
-        DATASET_NEURONS_FILEPATH="neurons_files/$MODEL_NAME/qa.json"
+        DATASET_NEURONS_FILEPATH="neuron_files/$MODEL_NAME/qa.json"
     elif [ "$TASK_NAME" = "wmt16-de-en" ] || [ "$TASK_NAME" = "wmt16-ro-en" ]; then
-        DATASET_NEURONS_FILEPATH="neurons_files/$MODEL_NAME/translate.json"
+        DATASET_NEURONS_FILEPATH="neuron_files/$MODEL_NAME/translate.json"
     elif [ "$TASK_NAME" = "xsum" ] || [ "$TASK_NAME" = "cnn_dailymail" ]; then
-        DATASET_NEURONS_FILEPATH="neurons_files/$MODEL_NAME/summarize.json"
+        DATASET_NEURONS_FILEPATH="neuron_files/$MODEL_NAME/summarize.json"
     fi
 
     FILE_NAME="${FILE_PREFIX_NAME}_${MODEL_NAME}.json"

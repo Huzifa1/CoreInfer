@@ -23,7 +23,7 @@ datasets = {
     "samsum": {"path": "samsum.statistics"},
 }
 
-outputFileName = f"../neurons_files/opt-6.7b/model_neurons.json"
+outputFileName = f"../neuron_files/opt-6.7b/model_neurons.json"
 
 normalized_activations = {}
 for name, meta in datasets.items():

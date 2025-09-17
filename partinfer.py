@@ -181,9 +181,9 @@ if __name__ == '__main__':
     parser.add_argument('--base_neurons_percent', type=float, default=0.3, help='Loaded Base Neurons Percent')
     parser.add_argument('--base_neurons_type', type=str, choices=['model', 'dataset'], default='dataset', help='Base Neurons Type')
     parser.add_argument('--loaded_neurons_percent', type=float, default=0.7, help='Overall Percent of Loaded Neurons')
-    parser.add_argument('--model_neurons_filepath', type=Path, default="neurons_files/llama3-3b/model_neurons.json", help='Path to model neurons file')
-    parser.add_argument('--dataset_neurons_filepath', type=Path, default="neurons_files/llama3-3b/qa.json", help='Path to dataset neurons file')
-    parser.add_argument('--mask_filepath', type=Path, default="neurons_files/mask.pkl", help='Path to output mask file')
+    parser.add_argument('--model_neurons_filepath', type=Path, default="neuron_files/llama3-3b/model_neurons.json", help='Path to model neurons file')
+    parser.add_argument('--dataset_neurons_filepath', type=Path, default="neuron_files/llama3-3b/qa.json", help='Path to dataset neurons file')
+    parser.add_argument('--mask_filepath', type=Path, default="neuron_files/mask.pkl", help='Path to output mask file')
 
     parser.add_argument('--function', type=str, choices=['normal', 'chat', 'predefined_prompts'], default='normal', help='Function to use')
 
